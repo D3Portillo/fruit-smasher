@@ -36,6 +36,8 @@ const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 
 const MOCK_TAPS_EARNED = 24_234_242
 const TIME_TO_DRILL = 13 // seconds
+
+let timer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isTutorialComplete, setIsTutorialComplete] = useAtom(
     atomIsTutorialComplete
@@ -80,10 +82,13 @@ export default function Home() {
   const IS_ENEMY_DEFEATED = ENEMY_HP <= 0.5
 
   useEffect(() => {
+    clearTimeout(timer)
     if (IS_ENEMY_DEFEATED) {
-      playSound("cry")
-      VIBRATES.success()
-      generateNewMonster()
+      timer = setTimeout(() => {
+        playSound("cry")
+        VIBRATES.success()
+        generateNewMonster()
+      }, 75)
     }
   }, [IS_ENEMY_DEFEATED])
 
@@ -134,7 +139,7 @@ export default function Home() {
       >
         <div className="flex-grow pointer-events-none" />
 
-        <div className="flex group-active:scale-[0.98] transition ease-in duration-100 select-none flex-grow items-center justify-center">
+        <div className="flex group-active:scale-[0.98] transition ease-in duration-75 select-none flex-grow items-center justify-center">
           <ExplodingDiv
             fragmentCount={24}
             className="w-[60vw] max-w-[14rem]"
