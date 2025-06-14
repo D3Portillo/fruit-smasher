@@ -1,12 +1,23 @@
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 
 export default function EyesAmazed({ className }: { className?: string }) {
   return (
-    <svg
+    <motion.svg
       xmlns="http://www.w3.org/2000/svg"
       className={cn("w-[1em]", className)}
       viewBox="0 0 408 408"
       fill="none"
+      animate={{
+        x: [0, -2, 1, 0, -1, 2, 0, 1, -2, 0],
+        y: [0, 1, -2, 1, 2, -1, 1, 0, -1, 0],
+        scale: [1, 1.02, 0.99, 1.02, 1],
+      }}
+      transition={{
+        duration: 9,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
     >
       <path
         stroke="#000"
@@ -35,6 +46,6 @@ export default function EyesAmazed({ className }: { className?: string }) {
         stroke-width="20"
         d="M272 304c-122 100-32-59-152 0"
       />
-    </svg>
+    </motion.svg>
   )
 }

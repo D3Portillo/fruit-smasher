@@ -14,38 +14,77 @@ import EyesMad from "@/components/sprites/EyesMad"
 import EyesAmazed from "@/components/sprites/EyesAmazed"
 import EyesDead from "@/components/sprites/EyesDead"
 import { useAudioMachine } from "@/lib/sounds"
+import ClickSpawn from "@/components/ClickSpawn"
+import { VIBRATES } from "@/lib/window"
+import { useEffect, useState } from "react"
+
+import { motion } from "framer-motion"
+import { useTimer } from "@/lib/time"
+import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
 
 const atomIsTutorialComplete = atomWithStorage("fs.isTutorialCompleted", false)
-const atomEnemyLife = atomWithStorage("zfs.current.enemyLife", 200)
-const atomTapsGivenForEnemy = atomWithStorage("zfs.current.tapsForEnemy", 0)
+const atomEnemyLife = atomWithStorage("zzzzfsz.current.enemyLife", 200)
+const atomTapsGivenForEnemy = atomWithStorage("zzzzzzfs.current.tapsForEnemy", 0)
 
 const MOCK_TAPS_EARNED = 24_234_242
+const TIME_TO_DRILL = 13 // seconds
 export default function Home() {
   const [isTutorialComplete, setIsTutorialComplete] = useAtom(
     atomIsTutorialComplete
   )
 
+  const { toast } = useToast()
+  const [rotateKey, setRotateKey] = useState(0)
+
   const [enemyLife, setEnemyLife] = useAtom(atomEnemyLife)
   const [tapsForEnemy, setTapsForEnemy] = useAtom(atomTapsGivenForEnemy)
 
-  const { playSound } = useAudioMachine(["pop1", "pop2", "pop3", "drill"])
+  const { playSound } = useAudioMachine([
+    "pop1",
+    "pop2",
+    "pop3",
+    "drill",
+    "ouch",
+    "hitlong",
+    "cry",
+    "error",
+  ])
   const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
+
+  const { elapsedTime, isComplete, restart } = useTimer(TIME_TO_DRILL)
+
+  const ENEMY_HP = Math.max(0, enemyLife - tapsForEnemy)
+  const DEFEATED_RATIO = (ENEMY_HP / enemyLife) * 100
+
+  useEffect(() => {
+    if (ENEMY_HP <= 0.5) {
+      playSound("cry")
+      VIBRATES.success()
+    }
+  }, [ENEMY_HP])
 
   function handleTap({ isMuted }: { isMuted?: boolean } = {}) {
     if (!isTutorialComplete) {
       setIsTutorialComplete(true)
     }
 
-    setTapsForEnemy((count) => count + 1)
+    const value = Math.random()
+    const isBigTap = value < 0.15 || value > 0.85
+
+    const TAP_AMOUNT = isBigTap ? 3 + Math.floor(Math.random() * 7) : 1
+    setTapsForEnemy((count) => count + TAP_AMOUNT)
 
     if (!isMuted) {
+      if (isBigTap) {
+        playSound("hitlong")
+        VIBRATES.tap()
+      }
       const randomPop = 1 + Math.floor(Math.random() * 3)
       playSound(`pop${randomPop}` as any, "0.75")
     }
-  }
 
-  const ENEMY_HP = Math.max(0, enemyLife - tapsForEnemy)
-  const DEFEATED_RATIO = (ENEMY_HP / enemyLife) * 100
+    return TAP_AMOUNT
+  }
 
   return (
     <main
@@ -65,14 +104,14 @@ export default function Home() {
         <div className="size-11 bg-black rounded-2xl"></div>
       </nav>
 
-      <section
-        tabIndex={-1}
-        onClick={() => handleTap()}
-        role="button"
+      <ClickSpawn
+        onTap={() => handleTap()}
         className="flex outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
       >
+        <div className="flex-grow pointer-events-none" />
+
         <div className="flex select-none flex-grow items-center justify-center">
-          <div className="w-[60vw] relative max-w-xs">
+          <div className="w-[60vw] relative max-w-[14rem]">
             {DEFEATED_RATIO < 4 ? (
               <EyesDead className="w-1/2 absolute left-1/4 bottom-1/4" />
             ) : DEFEATED_RATIO < 55 ? (
@@ -80,16 +119,14 @@ export default function Home() {
             ) : (
               <EyesMad className="w-1/2 absolute left-1/4 bottom-1/4" />
             )}
-            <Image src={asset_pineapple} alt="" />
+            <Image placeholder="blur" src={asset_pineapple} alt="" />
           </div>
         </div>
 
-        <div className="flex-grow pointer-events-none" />
-
-        <div className="min-h-24 pointer-events-none mb-28 w-full flex items-end justify-center">
+        <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
           {isTutorialComplete ? (
             <div className="w-full select-none px-5">
-              <h2 className="font-semibold text-xl">
+              <h2 className="font-semibold whitespace-nowrap text-xl">
                 Pineapple Larry ({numberToShortWords(ENEMY_HP)} HP)
               </h2>
 
@@ -110,10 +147,10 @@ export default function Home() {
             </p>
           )}
         </div>
-      </section>
+      </ClickSpawn>
 
       <nav className="bg-black shrink-0 z-1 px-4 pb-1 h-14 [&_*:not(.clipper)]:z-1 [&_*:not(.clipper)]:relative relative flex items-end justify-between">
-        <div className="h-[125%] clipper pointer-events-none bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
+        <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
 
         <div className="w-32 flex justify-start">
           <button className="p-2 text-white">
@@ -122,18 +159,45 @@ export default function Home() {
           </button>
         </div>
 
-        <button
-          onClick={() => {
-            handleTap({
-              isMuted: true,
-            })
-            setEnemyLife((prev) => Math.max(0, prev - 10))
-            playSound("drill", "0.8")
-          }}
-          className="bg-white shrink-0 outline-none group bottom-1/2 size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
-        >
-          <Blades className="w-20 scale-105 group-focus-within:rotate-[360deg] duration-700 ease-in-out" />
-        </button>
+        <section className="flex flex-col">
+          <button
+            onClick={() => {
+              if (!isComplete) {
+                playSound("error")
+                return toast.error({
+                  title: "Drill not ready",
+                })
+              }
+
+              handleTap({
+                isMuted: true,
+              })
+              const IMPACT = 25 + Math.floor(Math.random() * 45)
+              setEnemyLife((prev) => Math.max(0, prev - IMPACT))
+              setRotateKey((prev) => prev + 1)
+              playSound("drill", "0.8")
+              restart()
+            }}
+            className="bg-white shrink-0 outline-none group size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
+          >
+            <motion.div
+              key={rotateKey}
+              animate={rotateKey > 0 ? { rotate: 360 } : {}}
+              transition={{ duration: 0.7, ease: "easeInOut" }}
+            >
+              <Blades className="w-20 scale-105" />
+            </motion.div>
+          </button>
+
+          <div
+            className={cn(
+              isComplete ? "text-green-400" : "text-white/50",
+              "font-medium text-xs text-center mt-0.5 pb-2"
+            )}
+          >
+            {isComplete ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
+          </div>
+        </section>
 
         <div className="w-32 flex text-white justify-end">
           <button className="p-2">
