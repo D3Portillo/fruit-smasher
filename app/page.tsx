@@ -23,8 +23,8 @@ import { useTimer } from "@/lib/time"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
 
 const atomIsTutorialComplete = atomWithStorage("fs.isTutorialCompleted", false)
-const atomEnemyLife = atomWithStorage("zzzzfsz.current.enemyLife", 200)
-const atomTapsGivenForEnemy = atomWithStorage("zzzzzzfs.current.tapsForEnemy", 0)
+const atomEnemyLife = atomWithStorage("fs.current.enemyLife", 200)
+const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 
 const MOCK_TAPS_EARNED = 24_234_242
 const TIME_TO_DRILL = 13 // seconds
@@ -191,7 +191,7 @@ export default function Home() {
 
           <div
             className={cn(
-              isComplete ? "text-green-400" : "text-white/50",
+              isComplete ? "text-fs-green" : "text-white/50",
               "font-medium text-xs text-center mt-0.5 pb-2"
             )}
           >

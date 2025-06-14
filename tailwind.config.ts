@@ -36,6 +36,15 @@ const config: Config = {
         "7": ".07",
       },
       colors: {
+        fs: {
+          red: {
+            DEFAULT: "#FF004D",
+            est: "#FF0000",
+          },
+          green: {
+            DEFAULT: "#00FF60",
+          },
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

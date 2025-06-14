@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState } from "react"
 
@@ -57,7 +58,12 @@ export default function ClickSpawn({
         {clicks.map((click) => (
           <motion.div
             key={click.id}
-            className="absolute pointer-events-none text-3xl font-bold text-red-600 z-10"
+            className={cn(
+              click.amount > 1
+                ? "text-fs-red-est text-[2.2rem]"
+                : "text-fs-red text-3xl",
+              "absolute pointer-events-none font-bold z-10"
+            )}
             style={{
               left: click.x,
               top: click.y,
