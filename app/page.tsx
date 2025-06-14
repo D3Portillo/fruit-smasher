@@ -6,6 +6,7 @@ import Image from "next/image"
 
 import { FaBlender } from "react-icons/fa"
 import asset_pineapple from "@/assets/pineapple.png"
+import asset_orange from "@/assets/orange.png"
 import Blades from "@/components/sprites/Blades"
 import { useAtom } from "jotai/react"
 import { cn } from "@/lib/utils"
@@ -21,9 +22,16 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { useTimer } from "@/lib/time"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
+import ExplodingDiv from "@/components/ExplodingDiv"
+import { getRandomMonsterName, type MonsterTypes } from "@/lib/game"
 
 const atomIsTutorialComplete = atomWithStorage("fs.isTutorialCompleted", false)
-const atomEnemyLife = atomWithStorage("fs.current.enemyLife", 200)
+const atomMonster = atomWithStorage("fs.current.monster", {
+  hp: 250,
+  name: "Pineapple Larry",
+  type: "pineapple" as MonsterTypes,
+})
+
 const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 
 const MOCK_TAPS_EARNED = 24_234_242
@@ -36,7 +44,7 @@ export default function Home() {
   const { toast } = useToast()
   const [rotateKey, setRotateKey] = useState(0)
 
-  const [enemyLife, setEnemyLife] = useAtom(atomEnemyLife)
+  const [monster, setMonster] = useAtom(atomMonster)
   const [tapsForEnemy, setTapsForEnemy] = useAtom(atomTapsGivenForEnemy)
 
   const { playSound } = useAudioMachine([
@@ -44,24 +52,40 @@ export default function Home() {
     "pop2",
     "pop3",
     "drill",
-    "ouch",
     "hitlong",
     "cry",
     "error",
   ])
+
   const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
 
   const { elapsedTime, isComplete, restart } = useTimer(TIME_TO_DRILL)
 
-  const ENEMY_HP = Math.max(0, enemyLife - tapsForEnemy)
-  const DEFEATED_RATIO = (ENEMY_HP / enemyLife) * 100
+  const ENEMY_HP = Math.max(0, monster.hp - tapsForEnemy)
+  const DEFEATED_RATIO = (ENEMY_HP / monster.hp) * 100
+
+  function generateNewMonster() {
+    const type: MonsterTypes = ["pineapple", "orange"][
+      Math.floor(Math.random() * 2)
+    ] as any
+
+    setMonster({
+      hp: 250 + Math.floor(Math.random() * 100),
+      name: getRandomMonsterName(type),
+      type,
+    })
+    setTapsForEnemy(0)
+  }
+
+  const IS_ENEMY_DEFEATED = ENEMY_HP <= 0.5
 
   useEffect(() => {
-    if (ENEMY_HP <= 0.5) {
+    if (IS_ENEMY_DEFEATED) {
       playSound("cry")
       VIBRATES.success()
+      generateNewMonster()
     }
-  }, [ENEMY_HP])
+  }, [IS_ENEMY_DEFEATED])
 
   function handleTap({ isMuted }: { isMuted?: boolean } = {}) {
     if (!isTutorialComplete) {
@@ -106,28 +130,41 @@ export default function Home() {
 
       <ClickSpawn
         onTap={() => handleTap()}
-        className="flex outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
+        className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
       >
         <div className="flex-grow pointer-events-none" />
 
-        <div className="flex select-none flex-grow items-center justify-center">
-          <div className="w-[60vw] relative max-w-[14rem]">
+        <div className="flex group-active:scale-[0.98] transition ease-in duration-100 select-none flex-grow items-center justify-center">
+          <ExplodingDiv
+            fragmentCount={24}
+            className="w-[60vw] max-w-[14rem]"
+            explode={IS_ENEMY_DEFEATED}
+            fragmentEmojis={
+              monster.type === "orange"
+                ? ["🍊", "💥", "⚡", "🔥", "🍊"]
+                : ["🍍", "💥", "⚡", "🔥", "🍍"]
+            }
+          >
             {DEFEATED_RATIO < 4 ? (
               <EyesDead className="w-1/2 absolute left-1/4 bottom-1/4" />
-            ) : DEFEATED_RATIO < 55 ? (
+            ) : DEFEATED_RATIO < 45 ? (
               <EyesAmazed className="w-1/2 absolute left-1/4 bottom-1/4" />
             ) : (
               <EyesMad className="w-1/2 absolute left-1/4 bottom-1/4" />
             )}
-            <Image placeholder="blur" src={asset_pineapple} alt="" />
-          </div>
+            <Image
+              placeholder="blur"
+              src={monster.type === "orange" ? asset_orange : asset_pineapple}
+              alt=""
+            />
+          </ExplodingDiv>
         </div>
 
         <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
           {isTutorialComplete ? (
             <div className="w-full select-none px-5">
               <h2 className="font-semibold whitespace-nowrap text-xl">
-                Pineapple Larry ({numberToShortWords(ENEMY_HP)} HP)
+                {monster.name} ({numberToShortWords(ENEMY_HP)} HP)
               </h2>
 
               <div className="bg-black/3 mt-2 w-full h-3.5 rounded-full overflow-auto border-3 border-black">
@@ -172,9 +209,9 @@ export default function Home() {
               handleTap({
                 isMuted: true,
               })
-              const IMPACT = 25 + Math.floor(Math.random() * 45)
-              setEnemyLife((prev) => Math.max(0, prev - IMPACT))
+              const IMPACT = 35 + Math.floor(Math.random() * 45)
               setRotateKey((prev) => prev + 1)
+              setTapsForEnemy((count) => count + IMPACT)
               playSound("drill", "0.8")
               restart()
             }}
