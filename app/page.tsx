@@ -7,6 +7,9 @@ import Image from "next/image"
 import { FaBlender } from "react-icons/fa"
 import asset_pineapple from "@/assets/pineapple.png"
 import asset_orange from "@/assets/orange.png"
+import asset_fresa from "@/assets/fresa.png"
+import asset_watermelon from "@/assets/watermelon.png"
+
 import Blades from "@/components/sprites/Blades"
 import { useAtom } from "jotai/react"
 import { cn } from "@/lib/utils"
@@ -15,11 +18,11 @@ import EyesMad from "@/components/sprites/EyesMad"
 import EyesAmazed from "@/components/sprites/EyesAmazed"
 import EyesDead from "@/components/sprites/EyesDead"
 import { useAudioMachine } from "@/lib/sounds"
-import ClickSpawn from "@/components/ClickSpawn"
+import ClickSpawn, { HealthPoint } from "@/components/ClickSpawn"
 import { VIBRATES } from "@/lib/window"
 import { useEffect, useState } from "react"
 
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { useTimer } from "@/lib/time"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
 import ExplodingDiv from "@/components/ExplodingDiv"
@@ -33,15 +36,20 @@ const atomMonster = atomWithStorage("fs.current.monster", {
 })
 
 const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
-
+const atomTapMultiplier = atomWithStorage("fs.current.tapMultiplier", 1)
 const MOCK_TAPS_EARNED = 24_234_242
 const TIME_TO_DRILL = 13 // seconds
 
 let timer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isGameStarted, setIsGameStarted] = useState(false)
+  const [isDrilling, setIsDrilling] = useState({
+    impact: 40,
+    active: false,
+  })
 
   const { toast } = useToast()
+  const [tapMultiplier, setTapMultiplier] = useAtom(atomTapMultiplier)
   const [rotateKey, setRotateKey] = useState(0)
 
   const [monster, setMonster] = useAtom(atomMonster)
@@ -60,18 +68,22 @@ export default function Home() {
 
   const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
 
-  const { elapsedTime, isComplete, restart } = useTimer(TIME_TO_DRILL)
+  const {
+    elapsedTime,
+    isComplete: isDrillReady,
+    restart,
+  } = useTimer(TIME_TO_DRILL)
 
   const ENEMY_HP = Math.max(0, monster.hp - tapsForEnemy)
   const DEFEATED_RATIO = (ENEMY_HP / monster.hp) * 100
 
   function generateNewMonster() {
-    const type: MonsterTypes = ["pineapple", "orange"][
-      Math.floor(Math.random() * 2)
-    ] as any
+    const type = ["pineapple", "orange", "watermelon", "fresa"][
+      Math.floor(Math.random() * 4)
+    ] as MonsterTypes
 
     setMonster({
-      hp: 250 + Math.floor(Math.random() * 100),
+      hp: 250 + Math.round(Math.random() * 150),
       name: getRandomMonsterName(type),
       type,
     })
@@ -94,7 +106,7 @@ export default function Home() {
   useEffect(() => {
     // Start bg sound after first tap
     // to avoid autoplay issues on mobile :)
-    if (isGameStarted) playSound("bgx", "0.3", { loop: true })
+    if (isGameStarted) playSound("bgx", "0.2", { loop: true })
   }, [isGameStarted])
 
   function handleTap({ isMuted }: { isMuted?: boolean } = {}) {
@@ -103,7 +115,9 @@ export default function Home() {
     const value = Math.random()
     const isBigTap = value < 0.15 || value > 0.85
 
-    const TAP_AMOUNT = isBigTap ? 3 + Math.floor(Math.random() * 7) : 1
+    const TAP_AMOUNT =
+      tapMultiplier * (isBigTap ? 3 + Math.floor(Math.random() * 7) : 1)
+
     setTapsForEnemy((count) => count + TAP_AMOUNT)
 
     if (!isMuted) {
@@ -140,12 +154,17 @@ export default function Home() {
         onTap={() => handleTap()}
         className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
       >
-        <div className="fixed flex justify-center items-end pointer-events-none bottom-20 left-0 right-0">
+        <div
+          style={{
+            display: isGameStarted ? "flex" : "none",
+          }}
+          className="fixed text-fs-green justify-center items-end pointer-events-none bottom-20 left-0 right-0"
+        >
           <motion.div
             key={rotateKey}
             style={{
               scale: 2,
-              opacity: 0.7,
+              opacity: 1,
               translateY: "70%",
             }}
             animate={{
@@ -161,28 +180,66 @@ export default function Home() {
         <div className="flex-grow pointer-events-none" />
 
         <div className="flex group-active:scale-[0.98] transition ease-in duration-75 select-none flex-grow items-center justify-center">
+          {isDrilling.active ? (
+            <AnimatePresence>
+              <HealthPoint
+                id={-1}
+                amount={isDrilling.impact}
+                x={window.innerWidth * 0.45}
+                y={window.innerHeight * 0.12}
+              />
+            </AnimatePresence>
+          ) : null}
+
           <ExplodingDiv
             fragmentCount={24}
             className="w-[60vw] max-w-[14rem]"
             explode={IS_ENEMY_DEFEATED}
             fragmentEmojis={
-              monster.type === "orange"
-                ? ["🍊", "💥", "⚡", "🔥", "🍊"]
-                : ["🍍", "💥", "⚡", "🔥", "🍍"]
+              monster.type === "watermelon"
+                ? ["🍉", "💥", "🍉", "🔥", "🍉"]
+                : monster.type === "fresa"
+                ? ["🍓", "💥", "🍓", "🔥", "🍓"]
+                : monster.type === "orange"
+                ? ["🍊", "💥", "🍊", "🔥", "🍊"]
+                : ["🍍", "💥", "🍍", "🔥", "🍍"]
             }
           >
             {DEFEATED_RATIO < 4 ? (
-              <EyesDead className="w-1/2 absolute left-1/4 bottom-1/4" />
-            ) : DEFEATED_RATIO < 45 ? (
-              <EyesAmazed className="w-1/2 absolute left-1/4 bottom-1/4" />
+              <EyesDead className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+            ) : DEFEATED_RATIO < 37 ? (
+              <EyesAmazed className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
             ) : (
-              <EyesMad className="w-1/2 absolute left-1/4 bottom-1/4" />
+              <EyesMad className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
             )}
-            <Image
-              placeholder="blur"
-              src={monster.type === "orange" ? asset_orange : asset_pineapple}
-              alt=""
-            />
+            <motion.div
+              animate={
+                isDrilling.active
+                  ? {
+                      rotate: [0, -16, 0, -10, 0, -5, 0],
+                    }
+                  : {}
+              }
+              transition={{
+                duration: 0.4,
+                ease: "easeOut",
+                times: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1],
+              }}
+            >
+              <Image
+                placeholder="blur"
+                src={
+                  monster.type === "fresa"
+                    ? asset_fresa
+                    : monster.type === "watermelon"
+                    ? asset_watermelon
+                    : monster.type === "orange"
+                    ? asset_orange
+                    : asset_pineapple
+                }
+                alt=""
+              />
+            </motion.div>
           </ExplodingDiv>
         </div>
 
@@ -190,7 +247,8 @@ export default function Home() {
           {isGameStarted ? (
             <div className="w-full select-none px-5">
               <h2 className="font-semibold whitespace-nowrap text-xl">
-                {monster.name} ({numberToShortWords(ENEMY_HP)} HP)
+                {monster.name} (
+                {ENEMY_HP < 1 ? "<1" : numberToShortWords(ENEMY_HP)} HP)
               </h2>
 
               <div className="bg-black/3 mt-2 w-full h-3.5 rounded-full overflow-auto border-3 border-black">
@@ -214,7 +272,8 @@ export default function Home() {
         <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
 
         <div className="w-32 flex justify-start">
-          <button className="p-2 text-white">
+          <button className="p-2 relative text-white">
+            <div className="absolute top-1.5 left-px text-2xl">🫐</div>
             <FaBlender className="text-4xl" />
             <strong>1.4K</strong>
           </button>
@@ -223,30 +282,49 @@ export default function Home() {
         <section className="flex flex-col">
           <button
             onClick={() => {
-              if (!isComplete) {
+              // Early exit if already drilling
+              if (isDrilling.active) return
+              if (!isDrillReady) {
                 playSound("error")
                 return toast.error({
-                  title: "Drill not ready",
+                  title: "Blades not ready",
                 })
               }
+
+              playSound("cry")
+              VIBRATES.doubleTap()
 
               handleTap({
                 isMuted: true,
               })
-              const IMPACT = 35 + Math.floor(Math.random() * 45)
+              const IMPACT = 45 + Math.floor(Math.random() * 45)
+              setIsDrilling({
+                active: true,
+                impact: IMPACT,
+              })
+
+              // Add new key to trigger rotation animation
               setRotateKey((prev) => prev + 1)
+
+              // Increment taps for enemy by the impact amount
               setTapsForEnemy((count) => count + IMPACT)
               playSound("drill", "0.8")
               restart()
             }}
             className="bg-white shrink-0 outline-none group size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
           >
-            <EnergyPortal isActive={isComplete} />
+            <EnergyPortal isActive={isDrillReady} />
 
             <motion.div
               key={rotateKey}
               animate={rotateKey > 0 ? { rotate: 360 } : {}}
               transition={{ duration: 0.7, ease: "easeInOut" }}
+              onAnimationComplete={() =>
+                setIsDrilling({
+                  impact: 0,
+                  active: false,
+                })
+              }
             >
               <Blades className="w-20 scale-105" />
             </motion.div>
@@ -254,13 +332,13 @@ export default function Home() {
 
           <div
             className={cn(
-              isComplete
+              isDrillReady
                 ? "font-bold text-fs-green"
                 : "font-medium text-white/50",
               "text-xs text-center mt-0.5 pb-2"
             )}
           >
-            {isComplete ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
+            {isDrillReady ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
           </div>
         </section>
 
@@ -279,7 +357,7 @@ export default function Home() {
                 clip-rule="evenodd"
               />
             </svg>
-            <strong>x1.2</strong>
+            <strong>x{tapMultiplier.toFixed(1)}</strong>
           </button>
         </div>
       </nav>

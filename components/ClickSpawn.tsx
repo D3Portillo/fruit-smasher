@@ -56,41 +56,46 @@ export default function ClickSpawn({
 
       <AnimatePresence>
         {clicks.map((click) => (
-          <motion.div
-            key={click.id}
-            className={cn(
-              click.amount > 1
-                ? "text-fs-red-est text-[2.2rem]"
-                : "text-fs-red text-3xl",
-              "absolute pointer-events-none font-bold z-10"
-            )}
-            style={{
-              left: click.x,
-              top: click.y,
-              textShadow: "0 0 5px rgba(255, 0, 0, 0.3)",
-            }}
-            initial={{
-              opacity: 1,
-              y: 0,
-              scale: 0.8,
-            }}
-            animate={{
-              opacity: 0,
-              y: -50,
-              scale: 1.2,
-            }}
-            exit={{
-              opacity: 0,
-            }}
-            transition={{
-              duration: 0.8,
-              ease: "easeOut",
-            }}
-          >
-            -{click.amount}
-          </motion.div>
+          <HealthPoint key={`click-${click.id}`} {...click} />
         ))}
       </AnimatePresence>
     </div>
+  )
+}
+
+export function HealthPoint(click: ClickEffect) {
+  return (
+    <motion.div
+      className={cn(
+        click.amount > 1
+          ? "text-fs-red-est text-[2.2rem]"
+          : "text-fs-red text-3xl",
+        "absolute pointer-events-none font-bold z-10"
+      )}
+      style={{
+        left: click.x,
+        top: click.y,
+        textShadow: "0 0 5px rgba(255, 0, 0, 0.3)",
+      }}
+      initial={{
+        opacity: 1,
+        y: 0,
+        scale: 0.8,
+      }}
+      animate={{
+        opacity: 0,
+        y: -50,
+        scale: 1.2,
+      }}
+      exit={{
+        opacity: 0,
+      }}
+      transition={{
+        duration: 0.8,
+        ease: "easeOut",
+      }}
+    >
+      -{click.amount}
+    </motion.div>
   )
 }

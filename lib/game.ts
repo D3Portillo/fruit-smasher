@@ -1,6 +1,6 @@
 import { shuffleArray } from "./arrays"
 
-export type MonsterTypes = "pineapple" | "orange"
+export type MonsterTypes = "pineapple" | "orange" | "watermelon" | "fresa"
 
 export const getRandomMonsterName = (type: MonsterTypes) => {
   if (type === "pineapple") {
@@ -18,11 +18,39 @@ export const getRandomMonsterName = (type: MonsterTypes) => {
     ]).at(0)!
   }
 
+  if (type === "fresa") {
+    return shuffleArray([
+      "Berry Bad Bob",
+      "Strawberry Slayer",
+      "The Berry Bandit",
+      "Cap. Berrylicious",
+      "The BerrySmash",
+      "The Berry Beast",
+      "Berry Bonanza",
+      "The Straw Boss",
+      "Sir Strawbuckle",
+    ]).at(0)!
+  }
+
+  if (type === "watermelon") {
+    return shuffleArray([
+      "Melon Madness",
+      "Watermelon Warlord",
+      "Melon is MaName",
+      "The Juicier Jester",
+      "Slice & Dice Sam",
+      "Watermelon King",
+      "Melonhead Mike",
+      "The Rind Ripper",
+      "Cap. Water Monster",
+      "Da Melon Menace",
+    ]).at(0)!
+  }
   if (type === "orange") {
     return shuffleArray([
       "Citrus Itsy Bitsy",
       "The Notorious C.",
-      "O.U-Glad I'm Not Dead",
+      "U. Glad I'm Not Dead",
       "Pete the Punisher",
       "The Zesty Zombie",
       "Cap. Citrus Chaos",
