@@ -10,6 +10,7 @@ const ASSETS = {
   cry: "/sound/cry.mp3",
   error: "/sound/error.mp3",
   explode: "/sound/explode.mp3",
+  bgx: "/sound/bg.mp3",
 }
 
 type AudioAssets = keyof typeof ASSETS
@@ -28,14 +29,21 @@ export const useAudioMachine = <T extends AudioAssets>(assets: Array<T>) => {
     ) as any
   }, assets)
 
-  const playSound = (type: T, volumeLevel: ZeroToOneString = "1") => {
+  const playSound = (
+    type: T,
+    volumeLevel: ZeroToOneString = "1",
+    { loop = false }: { loop?: boolean } = {}
+  ) => {
     if (!audioAssets.current?.[type]) {
       return console.error(`Audio asset ${type} not found`)
     }
 
-    audioAssets.current[type].volume = Number(volumeLevel) // Set volume
-    audioAssets.current[type].currentTime = 0 // Reset to start
-    audioAssets.current[type].play().catch(noOp)
+    const audio = audioAssets.current[type]
+
+    audio.loop = loop
+    audio.volume = Number(volumeLevel) // Set volume
+    audio.currentTime = 0 // Reset to start
+    audio.play().catch(noOp)
   }
 
   return {

@@ -24,8 +24,8 @@ import { useTimer } from "@/lib/time"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
 import ExplodingDiv from "@/components/ExplodingDiv"
 import { getRandomMonsterName, type MonsterTypes } from "@/lib/game"
+import EnergyPortal from "@/components/EnergyPortal"
 
-const atomIsTutorialComplete = atomWithStorage("fs.isTutorialCompleted", false)
 const atomMonster = atomWithStorage("fs.current.monster", {
   hp: 250,
   name: "Pineapple Larry",
@@ -39,9 +39,7 @@ const TIME_TO_DRILL = 13 // seconds
 
 let timer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
-  const [isTutorialComplete, setIsTutorialComplete] = useAtom(
-    atomIsTutorialComplete
-  )
+  const [isGameStarted, setIsGameStarted] = useState(false)
 
   const { toast } = useToast()
   const [rotateKey, setRotateKey] = useState(0)
@@ -57,6 +55,7 @@ export default function Home() {
     "hitlong",
     "cry",
     "error",
+    "bgx",
   ])
 
   const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
@@ -83,19 +82,23 @@ export default function Home() {
 
   useEffect(() => {
     clearTimeout(timer)
-    if (IS_ENEMY_DEFEATED) {
+    if (IS_ENEMY_DEFEATED && tapsForEnemy > 2) {
       timer = setTimeout(() => {
         playSound("cry")
         VIBRATES.success()
         generateNewMonster()
       }, 75)
     }
-  }, [IS_ENEMY_DEFEATED])
+  }, [IS_ENEMY_DEFEATED, tapsForEnemy])
+
+  useEffect(() => {
+    // Start bg sound after first tap
+    // to avoid autoplay issues on mobile :)
+    if (isGameStarted) playSound("bgx", "0.3", { loop: true })
+  }, [isGameStarted])
 
   function handleTap({ isMuted }: { isMuted?: boolean } = {}) {
-    if (!isTutorialComplete) {
-      setIsTutorialComplete(true)
-    }
+    if (!isGameStarted) setIsGameStarted(true)
 
     const value = Math.random()
     const isBigTap = value < 0.15 || value > 0.85
@@ -137,6 +140,24 @@ export default function Home() {
         onTap={() => handleTap()}
         className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
       >
+        <div className="fixed flex justify-center items-end pointer-events-none bottom-20 left-0 right-0">
+          <motion.div
+            key={rotateKey}
+            style={{
+              scale: 2,
+              opacity: 0.7,
+              translateY: "70%",
+            }}
+            animate={{
+              rotate: rotateKey > 0 ? 360 : 0,
+              opacity: 0,
+            }}
+            transition={{ duration: 0.7, ease: "easeInOut" }}
+          >
+            <Blades className="w-[150vw]" />
+          </motion.div>
+        </div>
+
         <div className="flex-grow pointer-events-none" />
 
         <div className="flex group-active:scale-[0.98] transition ease-in duration-75 select-none flex-grow items-center justify-center">
@@ -166,7 +187,7 @@ export default function Home() {
         </div>
 
         <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
-          {isTutorialComplete ? (
+          {isGameStarted ? (
             <div className="w-full select-none px-5">
               <h2 className="font-semibold whitespace-nowrap text-xl">
                 {monster.name} ({numberToShortWords(ENEMY_HP)} HP)
@@ -182,10 +203,8 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <p className="leading-none animate-pulse text-black/60 font-medium">
-              Tap the screen to
-              <br />
-              smash the fruit ☝️
+            <p className="leading-tight animate-pulse text-black/60 font-medium">
+              Tap the screen to smash the fruit ☝️
             </p>
           )}
         </div>
@@ -222,6 +241,8 @@ export default function Home() {
             }}
             className="bg-white shrink-0 outline-none group size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
           >
+            <EnergyPortal isActive={isComplete} />
+
             <motion.div
               key={rotateKey}
               animate={rotateKey > 0 ? { rotate: 360 } : {}}
@@ -233,8 +254,10 @@ export default function Home() {
 
           <div
             className={cn(
-              isComplete ? "text-fs-green" : "text-white/50",
-              "font-medium text-xs text-center mt-0.5 pb-2"
+              isComplete
+                ? "font-bold text-fs-green"
+                : "font-medium text-white/50",
+              "text-xs text-center mt-0.5 pb-2"
             )}
           >
             {isComplete ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
