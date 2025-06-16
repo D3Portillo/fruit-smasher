@@ -28,6 +28,11 @@ import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
 import ExplodingDiv from "@/components/ExplodingDiv"
 import { getRandomMonsterName, type MonsterTypes } from "@/lib/game"
 import EnergyPortal from "@/components/EnergyPortal"
+import ModalTaps from "@/components/ModalTaps"
+import ModalBoost from "@/components/ModalBoost"
+import { useWorldAuth } from "@radish-la/world-auth"
+import ModalProfile from "@/components/ModalProfile"
+import ModalBlender from "@/components/ModalBlender"
 
 const atomMonster = atomWithStorage("fs.current.monster", {
   hp: 250,
@@ -50,6 +55,7 @@ export default function Home() {
 
   const { toast } = useToast()
   const [tapMultiplier, setTapMultiplier] = useAtom(atomTapMultiplier)
+  const { isConnected, signIn, user } = useWorldAuth()
   const [rotateKey, setRotateKey] = useState(0)
 
   const [monster, setMonster] = useAtom(atomMonster)
@@ -140,14 +146,39 @@ export default function Home() {
       }}
     >
       <nav className="flex px-5 pt-5 items-start justify-between">
-        <div>
-          <strong className="text-2xl">
-            {(MOCK_TAPS_EARNED + tapsForEnemy).toLocaleString("en-US")}
-          </strong>
-          <p className="text-lg -mt-1.5 font-medium">TAPS</p>
-        </div>
+        <ModalTaps
+          trigger={
+            <button className="text-left">
+              <strong className="text-2xl">
+                {(MOCK_TAPS_EARNED + tapsForEnemy).toLocaleString("en-US")}
+              </strong>
+              <p className="text-lg -mt-1.5 font-medium">TAPS</p>
+            </button>
+          }
+        />
 
-        <div className="size-11 bg-black rounded-2xl"></div>
+        {isConnected ? (
+          <ModalProfile
+            trigger={
+              <button
+                style={{
+                  backgroundImage: `url(${
+                    user?.profilePictureUrl || "/marble.png"
+                  })`,
+                }}
+                className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
+              />
+            }
+          />
+        ) : (
+          <button
+            style={{
+              backgroundImage: `url(/marble.png)`,
+            }}
+            onClick={signIn}
+            className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
+          />
+        )}
       </nav>
 
       <ClickSpawn
@@ -227,6 +258,7 @@ export default function Home() {
               }}
             >
               <Image
+                key={monster.type}
                 placeholder="blur"
                 src={
                   monster.type === "fresa"
@@ -272,11 +304,17 @@ export default function Home() {
         <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
 
         <div className="w-32 flex justify-start">
-          <button className="p-2 relative text-white">
-            <div className="absolute top-1.5 left-px text-2xl">🫐</div>
-            <FaBlender className="text-4xl" />
-            <strong>1.4K</strong>
-          </button>
+          <ModalBlender
+            trigger={
+              <button className="p-2 relative text-white">
+                <div className="absolute top-2 left-px text-2xl rotate-12">
+                  🫐
+                </div>
+                <FaBlender className="text-4xl" />
+                <strong>1.4K</strong>
+              </button>
+            }
+          />
         </div>
 
         <section className="flex flex-col">
@@ -287,7 +325,7 @@ export default function Home() {
               if (!isDrillReady) {
                 playSound("error")
                 return toast.error({
-                  title: "Blades not ready",
+                  title: "Blade is not ready",
                 })
               }
 
@@ -343,22 +381,26 @@ export default function Home() {
         </section>
 
         <div className="w-32 flex text-white justify-end">
-          <button className="p-2">
-            <svg
-              className="w-[1em] text-3xl"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 30 40"
-              fill="none"
-            >
-              <path
-                fill="currentColor"
-                fill-rule="evenodd"
-                d="M3.63 12.25a7.87 7.87 0 1 1 15.75 0 1.75 1.75 0 0 0 3.5 0 11.37 11.37 0 1 0-22.75 0 1.75 1.75 0 0 0 3.5 0ZM10 7.54a9.8 9.8 0 0 1 2.58-.02c1.9.25 3.1 1.93 3.27 3.73.2 2.19.44 5.2.47 7l.87.19c2.1.42 4.9.99 7.24 2.02a9.42 9.42 0 0 1 3.59 2.53 5.27 5.27 0 0 1 1.12 4.19 41.96 41.96 0 0 1-1.7 7.32 7.32 7.32 0 0 1-6.15 5.03c-3.4.39-6.83.38-10.22-.06-2.47-.32-4.76-1.6-5.93-3.88a26.9 26.9 0 0 1-2.52-8.07 5.3 5.3 0 0 1 1.7-4.69l2.36-2.2c0-4.58.11-7.61.22-9.5.1-1.75 1.28-3.33 3.1-3.59"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <strong>x{tapMultiplier.toFixed(1)}</strong>
-          </button>
+          <ModalBoost
+            trigger={
+              <button className="p-2">
+                <svg
+                  className="w-[1em] text-3xl"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 30 40"
+                  fill="none"
+                >
+                  <path
+                    fill="currentColor"
+                    fill-rule="evenodd"
+                    d="M3.63 12.25a7.87 7.87 0 1 1 15.75 0 1.75 1.75 0 0 0 3.5 0 11.37 11.37 0 1 0-22.75 0 1.75 1.75 0 0 0 3.5 0ZM10 7.54a9.8 9.8 0 0 1 2.58-.02c1.9.25 3.1 1.93 3.27 3.73.2 2.19.44 5.2.47 7l.87.19c2.1.42 4.9.99 7.24 2.02a9.42 9.42 0 0 1 3.59 2.53 5.27 5.27 0 0 1 1.12 4.19 41.96 41.96 0 0 1-1.7 7.32 7.32 7.32 0 0 1-6.15 5.03c-3.4.39-6.83.38-10.22-.06-2.47-.32-4.76-1.6-5.93-3.88a26.9 26.9 0 0 1-2.52-8.07 5.3 5.3 0 0 1 1.7-4.69l2.36-2.2c0-4.58.11-7.61.22-9.5.1-1.75 1.28-3.33 3.1-3.59"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <strong>x{tapMultiplier.toFixed(1)}</strong>
+              </button>
+            }
+          />
         </div>
       </nav>
     </main>

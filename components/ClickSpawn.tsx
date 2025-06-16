@@ -25,8 +25,8 @@ export default function ClickSpawn({
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const amount = onTap?.(e) || 1
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const x = e.clientX - rect.left - Math.round(Math.random() * 48) - 24 // Tap offset
+    const y = e.clientY - rect.top - 84 // Tap offset
 
     const newClick: ClickEffect = {
       id: nextId,
