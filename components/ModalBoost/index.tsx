@@ -63,13 +63,13 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
         <AlertDialogDescription className="mb-4">
           {isMaxedOut ? (
             <p>
-              <strong>MaxLevel Reached (2.5) 🚀.</strong> You have upgraded the
-              TPS to the maximum you can deal with fruit monsters.
+              <strong>MaxLevel Reached (2.5) 🚀.</strong> You have upgraded DPT
+              to the maximum level.
             </p>
           ) : (
             <p>
-              You can upgrade your Taps per second (TPS) to increase the total
-              damage per tap you deal with fruits.
+              You can upgrade your Damage Per Tap (DPT) to increase the damage
+              dealt to fruits in a single tap.
             </p>
           )}
 

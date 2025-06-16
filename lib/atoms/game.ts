@@ -9,7 +9,6 @@ export const atomTapsEarned = atomWithStorage("fs.tapsEarned", 0)
 export const useTapsEarned = () => useAtom(atomTapsEarned)
 
 /**
- * Multiplier for taps per second (TPS).
  * This is used to calculate the total damage per tap.
  * The default value is 1, meaning no multiplier.
  * It can be increased by purchasing upgrades or boosts.

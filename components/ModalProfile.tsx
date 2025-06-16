@@ -8,6 +8,7 @@ import Image, { type StaticImageData } from "next/image"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 import {
+  AlertDialogClose,
   Button,
   Drawer,
   DrawerClose,
@@ -15,18 +16,20 @@ import {
   DrawerTitle,
   DrawerTrigger,
   TopBar,
-  useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
 import { XMark } from "@/components/icons"
 
+import { beautifyAddress } from "@/lib/utils"
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useToggleRouteOnActive } from "@/lib/window"
+import { useTotalKilledMonsters } from "@/lib/atoms/game"
+
+import { TbLogout } from "react-icons/tb"
 
 import asset_fresa from "@/assets/fresa.png"
 import asset_pineapple from "@/assets/pineapple.png"
 import asset_watermelon from "@/assets/watermelon.png"
 import asset_orange from "@/assets/orange.png"
-import { useTotalKilledMonsters } from "@/lib/atoms/game"
 
 export const MONSTER_ASSETS = {
   fresa: asset_fresa,
@@ -43,7 +46,7 @@ export default function ModalProfile({
   const TITLE = "Manage Profile"
   const [open, setOpen] = useState(false)
   const { killedMonsters } = useTotalKilledMonsters()
-  const { signOut } = useWorldAuth()
+  const { signOut, user, address } = useWorldAuth()
 
   useToggleRouteOnActive({
     slug: "quests",
@@ -79,10 +82,31 @@ export default function ModalProfile({
         />
 
         <div className="no-scrollbar grid grid-cols-1 gap-4 mt-4 px-6 w-full overflow-auto">
+          <div className="border-3 bg-gradient-to-bl from-fs-purple/10 to-fs-purple/20 flex items-center gap-2 border-black rounded-2xl py-3 pl-3 pr-4">
+            <figure
+              style={{
+                backgroundImage: `url(${
+                  user?.profilePictureUrl || "/marble.png"
+                })`,
+              }}
+              className="size-11 bg-black bg-cover border-3 border-black shadow-lg rounded-2xl"
+            />
+            <div className="flex-grow">
+              <div className="text-xs">Connected Wallet</div>
+              <div className="text-sm font-semibold">
+                {address ? beautifyAddress(address, 7) : "Not connected"}
+              </div>
+            </div>
+
+            <button onClick={signOut} className="text-2xl">
+              <TbLogout />
+            </button>
+          </div>
+
           <div className="-mx-6 flex items-center h-6 relative">
             <div className="h-[2px] bg-black w-full" />
             <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
-              FRUIT STATS
+              GAME STATS
             </strong>
           </div>
 
@@ -100,7 +124,7 @@ export default function ModalProfile({
                 </div>
 
                 <div className="flex-grow" />
-                <p className="text-2xl font-bold">
+                <p className="text-xl font-semibold">
                   {(
                     killedMonsters[monsterType as MonsterTypes] || 0
                   ).toLocaleString("en-US")}
@@ -111,10 +135,13 @@ export default function ModalProfile({
         </div>
 
         <div className="flex-grow" />
-        <div className="px-6 mt-4 shrink-0 pb-6">
-          <Button onClick={handleLogout} className="w-full">
+        <div className="px-6 flex flex-col gap-4 mt-4 shrink-0 pb-6">
+          <Button variant="secondary" onClick={handleLogout} className="w-full">
             Disconnect
           </Button>
+          <AlertDialogClose asChild>
+            <Button className="w-full">Go back</Button>
+          </AlertDialogClose>
         </div>
       </DrawerContent>
     </Drawer>

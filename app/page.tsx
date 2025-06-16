@@ -53,7 +53,8 @@ const atomMonster = atomWithStorage("fs.current.monster", {
   type: "pineapple" as MonsterTypes,
 })
 
-let timer: NodeJS.Timeout | undefined = undefined
+let monsterMutexTimer: NodeJS.Timeout | undefined = undefined
+let debounceTimer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isGameStarted, setIsGameStarted] = useState(false)
   const { isConnected, signIn, user, address } = useWorldAuth()
@@ -118,9 +119,9 @@ export default function Home() {
   const IS_ENEMY_DEFEATED = ENEMY_HP <= 0.5
 
   useEffect(() => {
-    clearTimeout(timer)
+    clearTimeout(monsterMutexTimer)
     if (IS_ENEMY_DEFEATED && tapsForEnemy > 2) {
-      timer = setTimeout(() => {
+      monsterMutexTimer = setTimeout(() => {
         playSound("cry")
         VIBRATES.success()
         generateNewMonster()
@@ -139,8 +140,19 @@ export default function Home() {
     if (!isGameStarted) setIsGameStarted(true)
   }
 
+  function _syncEarnedTaps() {
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+      // TODO: Backend logic here
+      console.debug("syncs")
+    }, 2_000)
+    // Debounce for 2min
+    // Use the user tap as the debouncer action
+  }
+
   function handleTap() {
     _checkGameStarted()
+    _syncEarnedTaps()
 
     const BASE_TAP = multiplier // At least give multiplier ratio
     const BIG_TAP = BASE_TAP + 3 + Math.floor(Math.random() * 7)
@@ -167,12 +179,45 @@ export default function Home() {
     return DAMAGE
   }
 
+  function handleBladeTrigger() {
+    // Early exit if already drilling
+    if (isDrilling.active) return
+    if (!isDrillReady) {
+      playSound("error")
+      return toast.error({
+        title: "Blade is not ready",
+      })
+    }
+
+    _checkGameStarted()
+    _syncEarnedTaps()
+
+    playSound("cry")
+    VIBRATES.doubleTap()
+
+    const IMPACT = 45 + Math.floor(Math.random() * 45)
+    setIsDrilling({
+      active: true,
+      impact: IMPACT,
+    })
+
+    // Add new key to trigger rotation animation
+    setRotateKey((prev) => prev + 1)
+
+    // Increment taps for enemy by the impact amount
+    incrTapsGiven(IMPACT)
+
+    // Vibrate on drill
+    playSound("drill", "0.8")
+    restart()
+  }
+
   const PROFILE_IMAGE = (
     <figure
       style={{
         backgroundImage: `url(${user?.profilePictureUrl || "/marble.png"})`,
       }}
-      className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
+      className="size-11 bg-black bg-cover border-3 border-black shadow-lg rounded-2xl"
     />
   )
 
@@ -251,7 +296,12 @@ export default function Home() {
 
           <div className="flex-grow pointer-events-none" />
 
-          <div className="flex group-active:scale-[0.98] transition ease-in duration-75 select-none flex-grow items-center justify-center">
+          <div
+            style={{
+              transition: "transform 50ms ease-out",
+            }}
+            className="flex group-active:scale-[0.975] select-none flex-grow items-center justify-center"
+          >
             {isDrilling.active ? (
               <AnimatePresence>
                 <HealthPoint
@@ -266,16 +316,8 @@ export default function Home() {
             <ExplodingDiv
               fragmentCount={24}
               className="w-[60vw] max-w-[14rem]"
+              fragmentEmojis={getEmojiParticles(monster.type)}
               explode={IS_ENEMY_DEFEATED}
-              fragmentEmojis={
-                monster.type === "watermelon"
-                  ? ["🍉", "💥", "🍉", "🔥", "🍉"]
-                  : monster.type === "fresa"
-                  ? ["🍓", "💥", "🍓", "🔥", "🍓"]
-                  : monster.type === "orange"
-                  ? ["🍊", "💥", "🍊", "🔥", "🍊"]
-                  : ["🍍", "💥", "🍍", "🔥", "🍍"]
-              }
             >
               {DEFEATED_RATIO < 4 ? (
                 <EyesDead className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
@@ -285,21 +327,17 @@ export default function Home() {
                 <EyesMad className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
               )}
               <motion.div
-                animate={
-                  isDrilling.active
-                    ? {
-                        rotate: [0, -16, 0, -10, 0, -5, 0],
-                      }
-                    : {}
-                }
+                animate={{
+                  rotate: isDrilling.active ? [0, -16, 0, -10, 0, -5, 0] : [],
+                }}
                 transition={{
-                  duration: 0.4,
+                  duration: 0.5,
                   ease: "easeOut",
                   times: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1],
                 }}
               >
                 <Image
-                  key={monster.type}
+                  key={`image-f-${monster.type}`}
                   placeholder="blur"
                   src={MONSTER_ASSETS[monster.type]}
                   alt=""
@@ -353,36 +391,7 @@ export default function Home() {
 
         <section className="flex flex-col">
           <button
-            onClick={() => {
-              // Early exit if already drilling
-              if (isDrilling.active) return
-              if (!isDrillReady) {
-                playSound("error")
-                return toast.error({
-                  title: "Blade is not ready",
-                })
-              }
-
-              _checkGameStarted()
-              playSound("cry")
-              VIBRATES.doubleTap()
-
-              const IMPACT = 45 + Math.floor(Math.random() * 45)
-              setIsDrilling({
-                active: true,
-                impact: IMPACT,
-              })
-
-              // Add new key to trigger rotation animation
-              setRotateKey((prev) => prev + 1)
-
-              // Increment taps for enemy by the impact amount
-              incrTapsGiven(IMPACT)
-
-              // Vibrate on drill
-              playSound("drill", "0.8")
-              restart()
-            }}
+            onClick={handleBladeTrigger}
             className="bg-white shrink-0 outline-none group size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
           >
             <EnergyPortal isActive={isDrillReady} />
@@ -443,4 +452,17 @@ export default function Home() {
       </nav>
     </main>
   )
+}
+
+function getEmojiParticles(monsterType: MonsterTypes) {
+  const emoji = (
+    {
+      fresa: "🍓",
+      orange: "🍊",
+      pineapple: "🍍",
+      watermelon: "🍉",
+    } satisfies Record<MonsterTypes, string>
+  )[monsterType]
+
+  return [emoji, "💥", "🍊", "🔥", emoji]
 }
