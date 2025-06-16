@@ -70,7 +70,7 @@ export function HealthPoint(click: ClickEffect) {
         click.amount > 1
           ? "text-fs-red-est text-[2.2rem]"
           : "text-fs-red text-3xl",
-        "absolute pointer-events-none font-bold z-10"
+        "absolute pointer-events-none [text-stroke:_2px_black] [-webkit-text-stroke:_2px_black] font-bold z-10"
       )}
       style={{
         left: click.x,

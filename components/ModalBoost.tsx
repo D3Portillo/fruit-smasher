@@ -31,10 +31,12 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
             Upgrade your Taps per second (TPS) to increase the total damage per
             tap you deal with monsters.
           </p>
+
+          <p className="mt-2 font-semibold text-black">Next level: x1.1 ✨</p>
         </AlertDialogDescription>
         <div className="my-2" />
         <AlertDialogFooter>
-          <Button>Upgrade</Button>
+          <Button>Upgrade (1 WLD)</Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
