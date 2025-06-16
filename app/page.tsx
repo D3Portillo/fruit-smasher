@@ -10,6 +10,8 @@ import asset_orange from "@/assets/orange.png"
 import asset_fresa from "@/assets/fresa.png"
 import asset_watermelon from "@/assets/watermelon.png"
 
+import { useTapMultiplier, useTapsEarned } from "@/lib/atoms/game"
+
 import Blades from "@/components/sprites/Blades"
 import { useAtom } from "jotai/react"
 import { cn } from "@/lib/utils"
@@ -41,12 +43,11 @@ const atomMonster = atomWithStorage("fs.current.monster", {
 })
 
 const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
-const atomTapMultiplier = atomWithStorage("fs.current.tapMultiplier", 1)
-const MOCK_TAPS_EARNED = 24_234_242
 const TIME_TO_DRILL = 13 // seconds
 
 let timer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
+  const [tapsEarned, setTapsEarned] = useTapsEarned()
   const [isGameStarted, setIsGameStarted] = useState(false)
   const [isDrilling, setIsDrilling] = useState({
     impact: 40,
@@ -54,7 +55,7 @@ export default function Home() {
   })
 
   const { toast } = useToast()
-  const [tapMultiplier, setTapMultiplier] = useAtom(atomTapMultiplier)
+  const { multiplier, isMaxedOut } = useTapMultiplier()
   const { isConnected, signIn, user } = useWorldAuth()
   const [rotateKey, setRotateKey] = useState(0)
 
@@ -71,6 +72,12 @@ export default function Home() {
     "error",
     "bgx",
   ])
+
+  function incrTapsGiven(amount: number) {
+    // Round individually to avoid floating point issues
+    setTapsForEnemy((thisGameTaps) => Math.round(thisGameTaps + amount))
+    setTapsEarned((acc) => Math.round(acc + amount))
+  }
 
   const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
 
@@ -112,193 +119,211 @@ export default function Home() {
   useEffect(() => {
     // Start bg sound after first tap
     // to avoid autoplay issues on mobile :)
-    if (isGameStarted) playSound("bgx", "0.2", { loop: true })
+    if (isGameStarted) playSound("bgx", "0.15", { loop: true })
   }, [isGameStarted])
 
-  function handleTap({ isMuted }: { isMuted?: boolean } = {}) {
+  function _checkGameStarted() {
+    // Game starts as soon as the user taps any game-related element
     if (!isGameStarted) setIsGameStarted(true)
+  }
 
-    const value = Math.random()
-    const isBigTap = value < 0.15 || value > 0.85
+  function handleTap() {
+    _checkGameStarted()
 
-    const TAP_AMOUNT =
-      tapMultiplier * (isBigTap ? 3 + Math.floor(Math.random() * 7) : 1)
+    const BASE_TAP = multiplier // At least give multiplier ratio
+    const BIG_TAP = BASE_TAP + 3 + Math.floor(Math.random() * 7)
 
-    setTapsForEnemy((count) => count + TAP_AMOUNT)
+    const rand = Math.random()
+    const isBigTap = rand < 0.15 || rand > 0.85 // 15-30% chance of big tap
 
-    if (!isMuted) {
-      if (isBigTap) {
-        playSound("hitlong")
-        VIBRATES.tap()
-      }
-      const randomPop = 1 + Math.floor(Math.random() * 3)
-      playSound(`pop${randomPop}` as any, "0.75")
+    const DAMAGE = Math.round(
+      multiplier * (isBigTap ? BIG_TAP : Math.min(2, BASE_TAP))
+    )
+
+    incrTapsGiven(DAMAGE)
+
+    if (isBigTap) {
+      playSound("hitlong")
+      VIBRATES.tap()
     }
 
-    return TAP_AMOUNT
+    const randomPop = 1 + Math.floor(Math.random() * 3)
+    playSound(`pop${randomPop}` as any, "0.75")
+
+    // Return the total damage dealt
+    // Used inside different context/components
+    return DAMAGE
   }
 
   return (
     <main
-      className="flex bg-white max-w-xl mx-auto flex-col h-dvh overflow-hidden"
+      className="flex max-w-xl mx-auto flex-col h-dvh overflow-hidden"
       style={{
         paddingBottom: `${safePaddingBottom}px`,
       }}
     >
-      <nav className="flex px-5 pt-5 items-start justify-between">
-        <ModalTaps
-          trigger={
-            <button className="text-left">
-              <strong className="text-2xl">
-                {(MOCK_TAPS_EARNED + tapsForEnemy).toLocaleString("en-US")}
-              </strong>
-              <p className="text-lg -mt-1.5 font-medium">TAPS</p>
-            </button>
-          }
-        />
-
-        {isConnected ? (
-          <ModalProfile
+      <div className="bg-white flex flex-col flex-grow">
+        <nav className="flex px-5 pt-5 items-start justify-between">
+          <ModalTaps
             trigger={
-              <button
-                style={{
-                  backgroundImage: `url(${
-                    user?.profilePictureUrl || "/marble.png"
-                  })`,
-                }}
-                className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
-              />
+              <button className="text-left">
+                <strong className="text-2xl">
+                  {tapsEarned <= 0
+                    ? "NO."
+                    : tapsEarned < 10
+                    ? `0${Math.floor(tapsEarned)}`
+                    : tapsEarned.toLocaleString("en-US", {
+                        maximumFractionDigits: 3,
+                      })}
+                </strong>
+                <p className="text-lg -mt-1.5 font-medium">TAPS</p>
+              </button>
             }
           />
-        ) : (
-          <button
-            style={{
-              backgroundImage: `url(/marble.png)`,
-            }}
-            onClick={signIn}
-            className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
-          />
-        )}
-      </nav>
 
-      <ClickSpawn
-        onTap={() => handleTap()}
-        className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
-      >
-        <div
-          style={{
-            display: isGameStarted ? "flex" : "none",
-          }}
-          className="fixed text-fs-green justify-center items-end pointer-events-none bottom-20 left-0 right-0"
-        >
-          <motion.div
-            key={rotateKey}
-            style={{
-              scale: 2,
-              opacity: 1,
-              translateY: "70%",
-            }}
-            animate={{
-              rotate: rotateKey > 0 ? 360 : 0,
-              opacity: 0,
-            }}
-            transition={{ duration: 0.7, ease: "easeInOut" }}
-          >
-            <Blades className="w-[150vw]" />
-          </motion.div>
-        </div>
-
-        <div className="flex-grow pointer-events-none" />
-
-        <div className="flex group-active:scale-[0.98] transition ease-in duration-75 select-none flex-grow items-center justify-center">
-          {isDrilling.active ? (
-            <AnimatePresence>
-              <HealthPoint
-                id={-1}
-                amount={isDrilling.impact}
-                x={window.innerWidth * 0.45}
-                y={window.innerHeight * 0.12}
-              />
-            </AnimatePresence>
-          ) : null}
-
-          <ExplodingDiv
-            fragmentCount={24}
-            className="w-[60vw] max-w-[14rem]"
-            explode={IS_ENEMY_DEFEATED}
-            fragmentEmojis={
-              monster.type === "watermelon"
-                ? ["🍉", "💥", "🍉", "🔥", "🍉"]
-                : monster.type === "fresa"
-                ? ["🍓", "💥", "🍓", "🔥", "🍓"]
-                : monster.type === "orange"
-                ? ["🍊", "💥", "🍊", "🔥", "🍊"]
-                : ["🍍", "💥", "🍍", "🔥", "🍍"]
-            }
-          >
-            {DEFEATED_RATIO < 4 ? (
-              <EyesDead className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
-            ) : DEFEATED_RATIO < 37 ? (
-              <EyesAmazed className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
-            ) : (
-              <EyesMad className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
-            )}
-            <motion.div
-              animate={
-                isDrilling.active
-                  ? {
-                      rotate: [0, -16, 0, -10, 0, -5, 0],
-                    }
-                  : {}
-              }
-              transition={{
-                duration: 0.4,
-                ease: "easeOut",
-                times: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1],
-              }}
-            >
-              <Image
-                key={monster.type}
-                placeholder="blur"
-                src={
-                  monster.type === "fresa"
-                    ? asset_fresa
-                    : monster.type === "watermelon"
-                    ? asset_watermelon
-                    : monster.type === "orange"
-                    ? asset_orange
-                    : asset_pineapple
-                }
-                alt=""
-              />
-            </motion.div>
-          </ExplodingDiv>
-        </div>
-
-        <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
-          {isGameStarted ? (
-            <div className="w-full select-none px-5">
-              <h2 className="font-semibold whitespace-nowrap text-xl">
-                {monster.name} (
-                {ENEMY_HP < 1 ? "<1" : numberToShortWords(ENEMY_HP)} HP)
-              </h2>
-
-              <div className="bg-black/3 mt-2 w-full h-3.5 rounded-full overflow-auto border-3 border-black">
-                <div
+          {isConnected ? (
+            <ModalProfile
+              trigger={
+                <button
                   style={{
-                    width: `${DEFEATED_RATIO}%`,
+                    backgroundImage: `url(${
+                      user?.profilePictureUrl || "/marble.png"
+                    })`,
                   }}
-                  className="h-full transition-all min-w-1 rounded-full bg-black"
+                  className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
                 />
-              </div>
-            </div>
+              }
+            />
           ) : (
-            <p className="leading-tight animate-pulse text-black/60 font-medium">
-              Tap the screen to smash the fruit ☝️
-            </p>
+            <button
+              style={{
+                backgroundImage: `url(/marble.png)`,
+              }}
+              onClick={signIn}
+              className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
+            />
           )}
-        </div>
-      </ClickSpawn>
+        </nav>
+
+        <ClickSpawn
+          onTap={handleTap}
+          className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
+        >
+          <div
+            style={{
+              display: isGameStarted ? "flex" : "none",
+            }}
+            className="fixed text-fs-green justify-center items-end pointer-events-none bottom-20 left-0 right-0"
+          >
+            <motion.div
+              key={rotateKey}
+              style={{
+                scale: 2,
+                opacity: 1,
+                translateY: "70%",
+              }}
+              animate={{
+                rotate: rotateKey > 0 ? 360 : 0,
+                opacity: 0,
+              }}
+              transition={{ duration: 0.7, ease: "easeInOut" }}
+            >
+              <Blades className="w-[150vw]" />
+            </motion.div>
+          </div>
+
+          <div className="flex-grow pointer-events-none" />
+
+          <div className="flex group-active:scale-[0.98] transition ease-in duration-75 select-none flex-grow items-center justify-center">
+            {isDrilling.active ? (
+              <AnimatePresence>
+                <HealthPoint
+                  id={-1}
+                  amount={isDrilling.impact}
+                  x={window.innerWidth * 0.45}
+                  y={window.innerHeight * 0.12}
+                />
+              </AnimatePresence>
+            ) : null}
+
+            <ExplodingDiv
+              fragmentCount={24}
+              className="w-[60vw] max-w-[14rem]"
+              explode={IS_ENEMY_DEFEATED}
+              fragmentEmojis={
+                monster.type === "watermelon"
+                  ? ["🍉", "💥", "🍉", "🔥", "🍉"]
+                  : monster.type === "fresa"
+                  ? ["🍓", "💥", "🍓", "🔥", "🍓"]
+                  : monster.type === "orange"
+                  ? ["🍊", "💥", "🍊", "🔥", "🍊"]
+                  : ["🍍", "💥", "🍍", "🔥", "🍍"]
+              }
+            >
+              {DEFEATED_RATIO < 4 ? (
+                <EyesDead className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+              ) : DEFEATED_RATIO < 37 ? (
+                <EyesAmazed className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+              ) : (
+                <EyesMad className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+              )}
+              <motion.div
+                animate={
+                  isDrilling.active
+                    ? {
+                        rotate: [0, -16, 0, -10, 0, -5, 0],
+                      }
+                    : {}
+                }
+                transition={{
+                  duration: 0.4,
+                  ease: "easeOut",
+                  times: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1],
+                }}
+              >
+                <Image
+                  key={monster.type}
+                  placeholder="blur"
+                  src={
+                    monster.type === "fresa"
+                      ? asset_fresa
+                      : monster.type === "watermelon"
+                      ? asset_watermelon
+                      : monster.type === "orange"
+                      ? asset_orange
+                      : asset_pineapple
+                  }
+                  alt=""
+                />
+              </motion.div>
+            </ExplodingDiv>
+          </div>
+
+          <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
+            {isGameStarted ? (
+              <div className="w-full select-none px-5">
+                <h2 className="font-semibold whitespace-nowrap text-xl">
+                  {monster.name} (
+                  {ENEMY_HP < 1 ? "<1" : numberToShortWords(ENEMY_HP)} HP)
+                </h2>
+
+                <div className="bg-black/3 mt-2 w-full h-3.5 rounded-full overflow-auto border-3 border-black">
+                  <div
+                    style={{
+                      width: `${DEFEATED_RATIO}%`,
+                    }}
+                    className="h-full transition-all min-w-1 rounded-full bg-black"
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="leading-tight animate-pulse text-black/60 font-medium">
+                Tap the screen to smash the fruit ☝️
+              </p>
+            )}
+          </div>
+        </ClickSpawn>
+      </div>
 
       <nav className="bg-black shrink-0 z-1 px-4 pb-1 h-14 [&_*:not(.clipper)]:z-1 [&_*:not(.clipper)]:relative relative flex items-end justify-between">
         <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
@@ -306,12 +331,12 @@ export default function Home() {
         <div className="w-32 flex justify-start">
           <ModalBlender
             trigger={
-              <button className="p-2 relative text-white">
-                <div className="absolute top-2 left-px text-2xl rotate-12">
+              <button className="p-2 text-left relative text-white">
+                <div className="absolute top-2.5 left-1 text-2xl rotate-12">
                   🫐
                 </div>
                 <FaBlender className="text-4xl" />
-                <strong>1.4K</strong>
+                <strong>1.43K</strong>
               </button>
             }
           />
@@ -329,12 +354,10 @@ export default function Home() {
                 })
               }
 
+              _checkGameStarted()
               playSound("cry")
               VIBRATES.doubleTap()
 
-              handleTap({
-                isMuted: true,
-              })
               const IMPACT = 45 + Math.floor(Math.random() * 45)
               setIsDrilling({
                 active: true,
@@ -345,7 +368,9 @@ export default function Home() {
               setRotateKey((prev) => prev + 1)
 
               // Increment taps for enemy by the impact amount
-              setTapsForEnemy((count) => count + IMPACT)
+              incrTapsGiven(IMPACT)
+
+              // Vibrate on drill
               playSound("drill", "0.8")
               restart()
             }}
@@ -397,7 +422,11 @@ export default function Home() {
                     clip-rule="evenodd"
                   />
                 </svg>
-                <strong>x{tapMultiplier.toFixed(1)}</strong>
+                {isMaxedOut ? (
+                  <strong className="text-fs-purple">MAX</strong>
+                ) : (
+                  <strong>x{multiplier.toFixed(1)}</strong>
+                )}
               </button>
             }
           />

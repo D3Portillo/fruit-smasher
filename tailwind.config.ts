@@ -44,6 +44,9 @@ const config: Config = {
           green: {
             DEFAULT: "#00FF60",
           },
+          purple: {
+            DEFAULT: "#C52EF6",
+          },
         },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

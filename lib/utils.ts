@@ -6,3 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function noOp() {}
+
+export const generateUUID = () => crypto.randomUUID().replace(/-/g, "")
