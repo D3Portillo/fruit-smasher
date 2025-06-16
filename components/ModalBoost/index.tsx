@@ -17,10 +17,10 @@ import {
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapMultiplier } from "@/lib/atoms/game"
 import { executeWorldPayment } from "@/actions/payments"
+import { calculatePriceForNextMultiplier } from "./internals"
 
 const BASE_PURCHAGE_MULTIPLIER = 0.1 // 0.1x extra taps per second (TPS)
 export const MAX_MULTIPLIER = 2.5 // Maximum multiplier cap
-const PRICE_PER_UPGRADE = 1 // 1 WLD per upgrade
 
 export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
   const { toast } = useToast()
@@ -29,13 +29,14 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
 
   const isMaxedOut = multiplier >= MAX_MULTIPLIER
   const NEXT = multiplier + BASE_PURCHAGE_MULTIPLIER
+  const PRICE = calculatePriceForNextMultiplier(NEXT)
 
   async function handleUpgrade() {
     if (!address) return signIn()
     if (isMaxedOut) return
 
     const result = await executeWorldPayment({
-      amount: PRICE_PER_UPGRADE,
+      amount: PRICE,
       initiatorAddress: address,
       paymentDescription: `Upgradem ultiplier to ${NEXT.toFixed(1)}`,
       token: "WLD",
@@ -82,7 +83,7 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
         <AlertDialogFooter>
           <ActionContainer>
             <Button className="w-full" onClick={handleUpgrade}>
-              {isMaxedOut ? "Got it" : `Upgrade (${PRICE_PER_UPGRADE} WLD)`}
+              {isMaxedOut ? "Got it" : `Upgrade (${PRICE} WLD)`}
             </Button>
           </ActionContainer>
         </AlertDialogFooter>

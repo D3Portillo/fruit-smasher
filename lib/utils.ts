@@ -8,3 +8,6 @@ export function cn(...inputs: ClassValue[]) {
 export function noOp() {}
 
 export const generateUUID = () => crypto.randomUUID().replace(/-/g, "")
+
+export const beautifyAddress = (addr: string, size = 4, separator = "...") =>
+  `${addr.substr(0, size)}${separator}${addr.substr(-size, size)}`

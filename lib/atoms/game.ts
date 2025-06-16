@@ -1,5 +1,6 @@
 "use client"
 
+import type { MonsterTypes } from "@/lib/game"
 import { useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import { MAX_MULTIPLIER } from "@/components/ModalBoost"
@@ -21,5 +22,28 @@ export const useTapMultiplier = () => {
     multiplier,
     setMultiplier,
     isMaxedOut: multiplier >= MAX_MULTIPLIER,
+  }
+}
+
+const atomTotalKilledMonsters = atomWithStorage(
+  "fs.totalKilledMonsters",
+  {} as Record<MonsterTypes, number | undefined>
+)
+
+export const useTotalKilledMonsters = () => {
+  const [killedMonsters, setTotalKilledMonsters] = useAtom(
+    atomTotalKilledMonsters
+  )
+
+  function incrementMonsterKill(type: MonsterTypes) {
+    setTotalKilledMonsters((prev) => ({
+      ...prev,
+      [type]: (prev[type] || 0) + 1,
+    }))
+  }
+
+  return {
+    killedMonsters,
+    incrementMonsterKill,
   }
 }

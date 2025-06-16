@@ -1,6 +1,13 @@
 import { shuffleArray } from "./arrays"
 
-export type MonsterTypes = "pineapple" | "orange" | "watermelon" | "fresa"
+export const MONSTER_TYPES = [
+  "pineapple",
+  "orange",
+  "watermelon",
+  "fresa",
+] as const
+
+export type MonsterTypes = (typeof MONSTER_TYPES)[number]
 
 export const getRandomMonsterName = (type: MonsterTypes) => {
   if (type === "pineapple") {

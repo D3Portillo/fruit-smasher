@@ -3,38 +3,46 @@
 import { atomWithStorage } from "jotai/utils"
 import { MiniKit } from "@worldcoin/minikit-js"
 import Image from "next/image"
-
-import { FaBlender } from "react-icons/fa"
-import asset_pineapple from "@/assets/pineapple.png"
-import asset_orange from "@/assets/orange.png"
-import asset_fresa from "@/assets/fresa.png"
-import asset_watermelon from "@/assets/watermelon.png"
-
-import { useTapMultiplier, useTapsEarned } from "@/lib/atoms/game"
-
-import Blades from "@/components/sprites/Blades"
-import { useAtom } from "jotai/react"
-import { cn } from "@/lib/utils"
-import { numberToShortWords } from "@/lib/numbers"
-import EyesMad from "@/components/sprites/EyesMad"
-import EyesAmazed from "@/components/sprites/EyesAmazed"
-import EyesDead from "@/components/sprites/EyesDead"
-import { useAudioMachine } from "@/lib/sounds"
-import ClickSpawn, { HealthPoint } from "@/components/ClickSpawn"
-import { VIBRATES } from "@/lib/window"
 import { useEffect, useState } from "react"
+
+import {
+  useTapMultiplier,
+  useTapsEarned,
+  useTotalKilledMonsters,
+} from "@/lib/atoms/game"
+
+import { useAtom } from "jotai/react"
+import { beautifyAddress, cn } from "@/lib/utils"
+import { numberToShortWords } from "@/lib/numbers"
 
 import { AnimatePresence, motion } from "framer-motion"
 import { useTimer } from "@/lib/time"
+import { useWorldAuth } from "@radish-la/world-auth"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
-import ExplodingDiv from "@/components/ExplodingDiv"
-import { getRandomMonsterName, type MonsterTypes } from "@/lib/game"
+import { useAudioMachine } from "@/lib/sounds"
+import { shuffleArray } from "@/lib/arrays"
+
+import {
+  getRandomMonsterName,
+  MONSTER_TYPES,
+  type MonsterTypes,
+} from "@/lib/game"
+
 import EnergyPortal from "@/components/EnergyPortal"
 import ModalTaps from "@/components/ModalTaps"
 import ModalBoost from "@/components/ModalBoost"
-import { useWorldAuth } from "@radish-la/world-auth"
-import ModalProfile from "@/components/ModalProfile"
+import ModalProfile, { MONSTER_ASSETS } from "@/components/ModalProfile"
 import ModalBlender from "@/components/ModalBlender"
+
+import EyesMad from "@/components/sprites/EyesMad"
+import EyesAmazed from "@/components/sprites/EyesAmazed"
+import EyesDead from "@/components/sprites/EyesDead"
+import ClickSpawn, { HealthPoint } from "@/components/ClickSpawn"
+import ExplodingDiv from "@/components/ExplodingDiv"
+import Blades from "@/components/sprites/Blades"
+
+import { FaBlender } from "react-icons/fa"
+import { VIBRATES } from "@/lib/window"
 
 const atomMonster = atomWithStorage("fs.current.monster", {
   hp: 250,
@@ -47,20 +55,22 @@ const TIME_TO_DRILL = 13 // seconds
 
 let timer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
-  const [tapsEarned, setTapsEarned] = useTapsEarned()
   const [isGameStarted, setIsGameStarted] = useState(false)
+  const { isConnected, signIn, user, address } = useWorldAuth()
+  const { toast } = useToast()
+
+  const { multiplier, isMaxedOut } = useTapMultiplier()
+  const { incrementMonsterKill } = useTotalKilledMonsters()
+  const [tapsForEnemy, setTapsForEnemy] = useAtom(atomTapsGivenForEnemy)
+
   const [isDrilling, setIsDrilling] = useState({
     impact: 40,
     active: false,
   })
 
-  const { toast } = useToast()
-  const { multiplier, isMaxedOut } = useTapMultiplier()
-  const { isConnected, signIn, user } = useWorldAuth()
+  const [tapsEarned, setTapsEarned] = useTapsEarned()
   const [rotateKey, setRotateKey] = useState(0)
-
   const [monster, setMonster] = useAtom(atomMonster)
-  const [tapsForEnemy, setTapsForEnemy] = useAtom(atomTapsGivenForEnemy)
 
   const { playSound } = useAudioMachine([
     "pop1",
@@ -91,16 +101,16 @@ export default function Home() {
   const DEFEATED_RATIO = (ENEMY_HP / monster.hp) * 100
 
   function generateNewMonster() {
-    const type = ["pineapple", "orange", "watermelon", "fresa"][
-      Math.floor(Math.random() * 4)
-    ] as MonsterTypes
+    // Save stats for current defeated monster
+    incrementMonsterKill(monster.type)
+    const monsterType = shuffleArray(MONSTER_TYPES as any).at(0) as MonsterTypes
 
+    setTapsForEnemy(0)
     setMonster({
       hp: 250 + Math.round(Math.random() * 150),
-      name: getRandomMonsterName(type),
-      type,
+      name: getRandomMonsterName(monsterType),
+      type: monsterType,
     })
-    setTapsForEnemy(0)
   }
 
   const IS_ENEMY_DEFEATED = ENEMY_HP <= 0.5
@@ -155,6 +165,15 @@ export default function Home() {
     return DAMAGE
   }
 
+  const PROFILE_IMAGE = (
+    <figure
+      style={{
+        backgroundImage: `url(${user?.profilePictureUrl || "/marble.png"})`,
+      }}
+      className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
+    />
+  )
+
   return (
     <main
       className="flex max-w-xl mx-auto flex-col h-dvh overflow-hidden"
@@ -163,7 +182,7 @@ export default function Home() {
       }}
     >
       <div className="bg-white flex flex-col flex-grow">
-        <nav className="flex px-5 pt-5 items-start justify-between">
+        <nav className="flex h-24 px-5 pt-5 items-start justify-between">
           <ModalTaps
             trigger={
               <button className="text-left">
@@ -184,24 +203,20 @@ export default function Home() {
           {isConnected ? (
             <ModalProfile
               trigger={
-                <button
-                  style={{
-                    backgroundImage: `url(${
-                      user?.profilePictureUrl || "/marble.png"
-                    })`,
-                  }}
-                  className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
-                />
+                <button className="flex flex-col items-end">
+                  {PROFILE_IMAGE}
+                  <div className="text-xs mt-1 font-semibold">
+                    {user?.username ||
+                      (address ? beautifyAddress(address, 4, "") : "Connected")}
+                  </div>
+                </button>
               }
             />
           ) : (
-            <button
-              style={{
-                backgroundImage: `url(/marble.png)`,
-              }}
-              onClick={signIn}
-              className="size-11 bg-cover border-3 border-black shadow-lg rounded-2xl"
-            />
+            <button onClick={signIn} className="flex flex-col items-end">
+              {PROFILE_IMAGE}
+              <div className="text-xs mt-1 font-semibold">Connect</div>
+            </button>
           )}
         </nav>
 
@@ -284,15 +299,7 @@ export default function Home() {
                 <Image
                   key={monster.type}
                   placeholder="blur"
-                  src={
-                    monster.type === "fresa"
-                      ? asset_fresa
-                      : monster.type === "watermelon"
-                      ? asset_watermelon
-                      : monster.type === "orange"
-                      ? asset_orange
-                      : asset_pineapple
-                  }
+                  src={MONSTER_ASSETS[monster.type]}
                   alt=""
                 />
               </motion.div>
