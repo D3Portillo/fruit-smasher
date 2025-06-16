@@ -26,6 +26,7 @@ import asset_fresa from "@/assets/fresa.png"
 import asset_pineapple from "@/assets/pineapple.png"
 import asset_watermelon from "@/assets/watermelon.png"
 import asset_orange from "@/assets/orange.png"
+import { useTotalKilledMonsters } from "@/lib/atoms/game"
 
 export const MONSTER_ASSETS = {
   fresa: asset_fresa,
@@ -41,6 +42,7 @@ export default function ModalProfile({
 }) {
   const TITLE = "Manage Profile"
   const [open, setOpen] = useState(false)
+  const { killedMonsters } = useTotalKilledMonsters()
   const { signOut } = useWorldAuth()
 
   useToggleRouteOnActive({
@@ -76,23 +78,39 @@ export default function ModalProfile({
           }
         />
 
-        <div className="no-scrollbar flex flex-col gap-4 mt-4 px-6 w-full overflow-auto grow">
+        <div className="no-scrollbar grid grid-cols-1 gap-4 mt-4 px-6 w-full overflow-auto">
+          <div className="-mx-6 flex items-center h-6 relative">
+            <div className="h-[2px] bg-black w-full" />
+            <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
+              FRUIT STATS
+            </strong>
+          </div>
+
           {Object.entries(MONSTER_ASSETS).map(([monsterType, image]) => {
             return (
-              <div className="border-3 border-black rounded-2xl p-4">
-                <div className="flex items-center gap-4">
-                  <figure className="rounded-2xl overflow-hidden flex items-center justify-center p-4 size-24 border-3 border-black bg-white">
-                    <Image placeholder="blur" src={image} alt="" />
-                  </figure>
-                  <div className="text-lg font-semibold capitalize">
-                    {monsterType}s Terminated
-                  </div>
+              <div
+                key={`total-for-${monsterType}`}
+                className="border-3 flex items-center gap-2 border-black rounded-2xl py-3 pl-3 pr-5"
+              >
+                <figure className="rounded-xl shrink-0 overflow-hidden flex items-center justify-center size-11 drop-shadow p-1 bg-gradient-to-br from-fs-purple to-fs-green">
+                  <Image placeholder="blur" src={image} alt="" />
+                </figure>
+                <div className="text-sm leading-none font-semibold capitalize">
+                  {monsterType}s Smashed
                 </div>
+
+                <div className="flex-grow" />
+                <p className="text-2xl font-bold">
+                  {(
+                    killedMonsters[monsterType as MonsterTypes] || 0
+                  ).toLocaleString("en-US")}
+                </p>
               </div>
             )
           })}
         </div>
 
+        <div className="flex-grow" />
         <div className="px-6 mt-4 shrink-0 pb-6">
           <Button onClick={handleLogout} className="w-full">
             Disconnect

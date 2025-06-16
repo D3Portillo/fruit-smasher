@@ -44,14 +44,14 @@ import Blades from "@/components/sprites/Blades"
 import { FaBlender } from "react-icons/fa"
 import { VIBRATES } from "@/lib/window"
 
+const TIME_TO_DRILL = 13 // seconds
+
+const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 const atomMonster = atomWithStorage("fs.current.monster", {
   hp: 250,
   name: "Pineapple Larry",
   type: "pineapple" as MonsterTypes,
 })
-
-const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
-const TIME_TO_DRILL = 13 // seconds
 
 let timer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
@@ -103,13 +103,15 @@ export default function Home() {
   function generateNewMonster() {
     // Save stats for current defeated monster
     incrementMonsterKill(monster.type)
-    const monsterType = shuffleArray(MONSTER_TYPES as any).at(0) as MonsterTypes
+    const newMmonsterType = shuffleArray(MONSTER_TYPES as any).at(
+      0
+    ) as MonsterTypes
 
     setTapsForEnemy(0)
     setMonster({
       hp: 250 + Math.round(Math.random() * 150),
-      name: getRandomMonsterName(monsterType),
-      type: monsterType,
+      name: getRandomMonsterName(newMmonsterType),
+      type: newMmonsterType,
     })
   }
 

@@ -38,7 +38,7 @@ export const useTotalKilledMonsters = () => {
   function incrementMonsterKill(type: MonsterTypes) {
     setTotalKilledMonsters((prev) => ({
       ...prev,
-      [type]: (prev[type] || 0) + 1,
+      [type]: 1 + (prev[type] || 0),
     }))
   }
 
