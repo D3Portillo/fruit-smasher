@@ -29,16 +29,18 @@ export const useAudioMachine = <T extends AudioAssets>(assets: Array<T>) => {
     ) as any
   }, assets)
 
+  function getAudioAsset(type: T) {
+    const asset = audioAssets.current?.[type]
+    if (!asset) throw `Audio asset ${type} not found`
+    return asset
+  }
+
   const playSound = (
     type: T,
     volumeLevel: ZeroToOneString = "1",
     { loop = false }: { loop?: boolean } = {}
   ) => {
-    if (!audioAssets.current?.[type]) {
-      return console.error(`Audio asset ${type} not found`)
-    }
-
-    const audio = audioAssets.current[type]
+    const audio = getAudioAsset(type)
 
     audio.loop = loop
     audio.volume = Number(volumeLevel) // Set volume
@@ -48,5 +50,10 @@ export const useAudioMachine = <T extends AudioAssets>(assets: Array<T>) => {
 
   return {
     playSound,
+    stopSound: (type: T) => {
+      const audio = getAudioAsset(type)
+      audio.pause() // Pause the audio
+      audio.currentTime = 0 // Reset to start
+    },
   }
 }

@@ -42,7 +42,7 @@ import ExplodingDiv from "@/components/ExplodingDiv"
 import Blades from "@/components/sprites/Blades"
 
 import { FaBlender } from "react-icons/fa"
-import { VIBRATES } from "@/lib/window"
+import { isAnyModalOpen, useOnRouterBack, VIBRATES } from "@/lib/window"
 
 const TIME_TO_DRILL = 13 // seconds
 
@@ -72,7 +72,7 @@ export default function Home() {
   const [rotateKey, setRotateKey] = useState(0)
   const [monster, setMonster] = useAtom(atomMonster)
 
-  const { playSound } = useAudioMachine([
+  const { playSound, stopSound } = useAudioMachine([
     "pop1",
     "pop2",
     "pop3",
@@ -207,6 +207,15 @@ export default function Home() {
       className="size-11 bg-black bg-cover border-3 border-black shadow-lg rounded-2xl"
     />
   )
+
+  useOnRouterBack({
+    isActive: typeof window != "undefined" && !location.hash,
+    onRouterBack: () => {
+      // Early exit if any modal is open
+      if (isAnyModalOpen()) return
+      stopSound("bgx")
+    },
+  })
 
   return (
     <main

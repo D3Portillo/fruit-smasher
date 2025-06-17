@@ -24,20 +24,22 @@ export const VIBRATES = {
   heartbeat: () => vibrate([100, 100, 100, 100]), // Heartbeat pattern
 }
 
-export function useOnRouterBack(onRouterBack: (e: PopStateEvent) => void) {
+export function useOnRouterBack({
+  onRouterBack,
+  isActive,
+}: {
+  onRouterBack: (e: PopStateEvent) => void
+  isActive: boolean
+}) {
   useEffect(() => {
-    const handleRouteChange = (e: PopStateEvent) => {
-      // Only call the callback if it's a back navigation
-      // This is a bit of a workaround since Next.js doesn't expose history state directly
-      onRouterBack(e)
-    }
+    const handleRouteChange = (e: PopStateEvent) =>
+      isActive ? onRouterBack(e) : null
 
     window.addEventListener("popstate", handleRouteChange as any)
-
     return () => {
       window.removeEventListener("popstate", handleRouteChange as any)
     }
-  }, [onRouterBack])
+  }, [onRouterBack, isActive])
 }
 
 /**
