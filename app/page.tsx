@@ -103,13 +103,14 @@ export default function Home() {
   function generateNewMonster() {
     // Save stats for current defeated monster
     incrementMonsterKill(monster.type)
-    const newMmonsterType = shuffleArray(MONSTER_TYPES as any).at(
-      0
-    ) as MonsterTypes
+    const newMmonsterType = shuffleArray(
+      // Exclude current monster type
+      MONSTER_TYPES.filter((type) => type !== monster.type)
+    ).at(0) as MonsterTypes
 
     setTapsForEnemy(0)
     setMonster({
-      hp: 250 + Math.round(Math.random() * 150),
+      hp: 250 + Math.round(Math.random() * 170), // 250-420 HP
       name: getRandomMonsterName(newMmonsterType),
       type: newMmonsterType,
     })
@@ -143,12 +144,22 @@ export default function Home() {
     _checkGameStarted()
 
     const BASE_TAP = multiplier // At least give multiplier ratio
-    const BIG_TAP = BASE_TAP + 3 + Math.floor(Math.random() * 7)
+    const BIG_TAP =
+      1 +
+      BASE_TAP +
+      Math.round(
+        Math.random() *
+          (5 *
+            // Cap to 1.4x multiplier
+            // So max extra value is 7
+            Math.min(1.4, multiplier))
+      )
 
     const rand = Math.random()
     const isBigTap = rand < 0.15 || rand > 0.85 // 15-30% chance of big tap
 
     const DAMAGE = Math.round(
+      // Cap to 2x multiplier so max TOTAL damage is 20
       multiplier * (isBigTap ? BIG_TAP : Math.min(2, BASE_TAP))
     )
 
@@ -182,7 +193,7 @@ export default function Home() {
     playSound("cry")
     VIBRATES.doubleTap()
 
-    const IMPACT = 45 + Math.floor(Math.random() * 45)
+    const IMPACT = 48 + Math.round(Math.random() * 72) // 48-120 damage
     setIsDrilling({
       active: true,
       impact: IMPACT,
