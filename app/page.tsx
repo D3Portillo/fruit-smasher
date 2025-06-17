@@ -54,7 +54,6 @@ const atomMonster = atomWithStorage("fs.current.monster", {
 })
 
 let monsterMutexTimer: NodeJS.Timeout | undefined = undefined
-let debounceTimer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isGameStarted, setIsGameStarted] = useState(false)
   const { isConnected, signIn, user, address } = useWorldAuth()
@@ -140,19 +139,8 @@ export default function Home() {
     if (!isGameStarted) setIsGameStarted(true)
   }
 
-  function _syncEarnedTaps() {
-    clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-      // TODO: Backend logic here
-      console.debug("syncs")
-    }, 2_000)
-    // Debounce for 2min
-    // Use the user tap as the debouncer action
-  }
-
   function handleTap() {
     _checkGameStarted()
-    _syncEarnedTaps()
 
     const BASE_TAP = multiplier // At least give multiplier ratio
     const BIG_TAP = BASE_TAP + 3 + Math.floor(Math.random() * 7)
@@ -190,7 +178,6 @@ export default function Home() {
     }
 
     _checkGameStarted()
-    _syncEarnedTaps()
 
     playSound("cry")
     VIBRATES.doubleTap()

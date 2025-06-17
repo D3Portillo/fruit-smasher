@@ -15,9 +15,17 @@ import {
   useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
 
+import { MiniKit } from "@worldcoin/minikit-js"
+import { formatEther } from "viem"
+import { getDispenserPayload } from "@/actions/dispenser"
+
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapsEarned } from "@/lib/atoms/game"
 import { numberToShortWords } from "@/lib/numbers"
+import { worldClient } from "@/lib/world"
+
+import { ADDRESS_DISPENSER } from "@/lib/constants"
+import { ABI_DISPENSER } from "@/lib/abis"
 
 export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,28 +33,75 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const { toast } = useToast()
   const { signIn, address } = useWorldAuth()
 
-  const { data: claimedTAPS = 0 } = useSWR(
-    address && isOpen ? `claimed.fs.${address}` : null,
+  const {
+    data: claimedTAPS = 0,
+    error,
+    isLoading,
+    isValidating,
+  } = useSWR(
+    // We revalidate anytime a new "tap" is earned
+    address && isOpen ? `claimed.fs.${address}.${localStoredTaps}` : null,
     // Only fetch when the modal is open and address is available
     async () => {
-      // TODO: Check for the claimed balance from the Smart Contract
-      return 0
+      if (!address) return 0
+      const claimed = await worldClient.readContract({
+        address: ADDRESS_DISPENSER,
+        functionName: "claimed",
+        abi: ABI_DISPENSER,
+        args: [address],
+      })
+
+      return Number(formatEther(claimed))
     }
   )
 
-  const claimableTAPS = Math.max(0, localStoredTaps - claimedTAPS)
+  const isSynced = !error && !isLoading && !isValidating
+
+  const claimableTAPS = isSynced
+    ? // Won't claim until syncing is done
+      Math.max(0, localStoredTaps - claimedTAPS)
+    : 0
   const isClaiming = claimableTAPS > 0
   const ActionContainer = isClaiming ? Fragment : AlertDialogClose
 
-  function handleClaim() {
+  async function handleClaim() {
     if (!address) return signIn()
-    toast.success({
-      title: `Claimed ${numberToShortWords(claimableTAPS)} TAPS`,
+
+    const { amount, deadline, signature } = await getDispenserPayload(address, {
+      requestingAmount: claimableTAPS,
     })
+
+    const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+      transaction: [
+        {
+          abi: ABI_DISPENSER,
+          address: ADDRESS_DISPENSER,
+          functionName: "claim",
+          args: [amount, deadline, signature],
+        },
+      ],
+    })
+
+    if (finalPayload.status === "success") {
+      toast.success({
+        title: `Claimed ${numberToShortWords(claimableTAPS)} TAPS`,
+      })
+      // Close modal after successful claim
+      return setIsOpen(false)
+    }
+
+    // Do not show error state if user denied the transaction
+    // Only if there was an error when executing the transaction
+    const isErrored = Boolean((finalPayload as any)?.details?.debugUrl)
+    if (isErrored) {
+      toast.error({
+        title: "Failed. Please try again",
+      })
+    }
   }
 
   return (
-    <AlertDialog onOpenChange={setIsOpen}>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent className="[&_.size-10]:translate-x-2 [&_[aria-role=header]]:items-start [&_.size-10]:-translate-y-2">
         <AlertDialogHeader aria-role="header">

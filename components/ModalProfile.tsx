@@ -103,7 +103,7 @@ export default function ModalProfile({
             </button>
           </div>
 
-          <div className="-mx-6 flex items-center h-6 relative">
+          <div className="-mx-6 flex items-center h-10 relative">
             <div className="h-[2px] bg-black w-full" />
             <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
               GAME STATS

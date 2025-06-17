@@ -22,8 +22,9 @@ const fontSora = Sora({
 })
 
 export const metadata: Metadata = {
-  title: "Next14 - World Mini App Template",
-  description: "Template",
+  title: "Fruit Smasher",
+  description:
+    "Fruit Smasher is a fun and interactive game where you can smash fruits to earn rewards",
 }
 
 const ErudaProvider = dynamic(

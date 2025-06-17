@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, useState } from "react"
 
 import {
   AlertDialog,
@@ -23,6 +23,8 @@ const BASE_PURCHAGE_MULTIPLIER = 0.1 // 0.1x extra taps per second (TPS)
 export const MAX_MULTIPLIER = 2.5 // Maximum multiplier cap
 
 export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false)
+
   const { toast } = useToast()
   const { signIn, address } = useWorldAuth()
   const { multiplier, setMultiplier } = useTapMultiplier()
@@ -47,13 +49,16 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
       toast.success({
         title: `Upgraded to x${NEXT.toFixed(1)} ✨`,
       })
+
+      // Close modal after successful upgrade
+      setIsOpen(false)
     }
   }
 
   const ActionContainer = isMaxedOut ? AlertDialogClose : Fragment
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent className="[&_.size-10]:translate-x-2 [&_[aria-role=header]]:items-start [&_.size-10]:-translate-y-2">
         <AlertDialogHeader aria-role="header">
