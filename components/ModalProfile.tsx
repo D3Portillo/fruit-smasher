@@ -27,10 +27,10 @@ import { useTapPopSound } from "@/lib/sounds"
 
 import { TbLogout } from "react-icons/tb"
 
-import asset_fresa from "@/assets/fresa.png"
-import asset_pineapple from "@/assets/pineapple.png"
-import asset_watermelon from "@/assets/watermelon.png"
-import asset_orange from "@/assets/orange.png"
+import asset_fresa from "@/assets/fresa.svg"
+import asset_pineapple from "@/assets/pineapple.svg"
+import asset_watermelon from "@/assets/watermelon.svg"
+import asset_orange from "@/assets/orange.svg"
 
 export const MONSTER_ASSETS = {
   fresa: asset_fresa,

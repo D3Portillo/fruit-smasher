@@ -340,8 +340,7 @@ export default function Home() {
                 }}
               >
                 <Image
-                  key={`image-f-${monster.type}`}
-                  placeholder="blur"
+                  key={`image-for-${monster.type}`}
                   src={MONSTER_ASSETS[monster.type]}
                   alt=""
                 />
