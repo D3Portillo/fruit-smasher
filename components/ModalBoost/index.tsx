@@ -10,9 +10,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
-  Button,
   useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
+import MainButton from "@/components/MainButton"
 
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapMultiplier } from "@/lib/atoms/game"
@@ -91,9 +91,9 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
         <div className="my-2" />
         <AlertDialogFooter>
           <ActionContainer>
-            <Button className="w-full" onClick={handleUpgrade}>
+            <MainButton onClick={handleUpgrade}>
               {isMaxedOut ? "Got it" : `Upgrade (${PRICE} WLD)`}
-            </Button>
+            </MainButton>
           </ActionContainer>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -11,7 +11,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
-  Button,
   useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
 
@@ -27,6 +26,8 @@ import { worldClient } from "@/lib/world"
 
 import { ADDRESS_DISPENSER } from "@/lib/constants"
 import { ABI_DISPENSER } from "@/lib/abis"
+
+import MainButton from "./MainButton"
 
 export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -128,14 +129,14 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
         <div className="my-2" />
         <AlertDialogFooter>
           <ActionContainer asChild>
-            <Button
+            <MainButton
               onClick={isClaiming ? handleClaim : undefined}
               className="w-full"
             >
               {isClaiming
                 ? `Claim ${numberToShortWords(claimableTAPS)} TAPS`
                 : "Got it"}
-            </Button>
+            </MainButton>
           </ActionContainer>
         </AlertDialogFooter>
       </AlertDialogContent>

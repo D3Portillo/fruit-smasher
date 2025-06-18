@@ -2,18 +2,18 @@
 
 import {
   AlertDialog,
-  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
-  Button,
   useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
 
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapPopSound } from "@/lib/sounds"
+
+import MainButton from "./MainButton"
 
 export default function ModalBlender({
   trigger,
@@ -48,7 +48,7 @@ export default function ModalBlender({
         </AlertDialogDescription>
         <div className="my-2" />
         <AlertDialogFooter>
-          <Button onClick={handleSetupBlender}>Setup Blender</Button>
+          <MainButton onClick={handleSetupBlender}>Setup Blender</MainButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

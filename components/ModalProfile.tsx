@@ -9,7 +9,6 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 import {
   AlertDialogClose,
-  Button,
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -26,6 +25,7 @@ import { useTotalKilledMonsters } from "@/lib/atoms/game"
 import { useTapPopSound } from "@/lib/sounds"
 
 import { TbLogout } from "react-icons/tb"
+import MainButton from "./MainButton"
 
 import asset_fresa from "@/assets/fresa.svg"
 import asset_pineapple from "@/assets/pineapple.svg"
@@ -74,11 +74,11 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
         </VisuallyHidden>
         <TopBar
           title={TITLE}
-          startAdornment={
+          endAdornment={
             <DrawerClose asChild>
-              <Button variant="tertiary" size="icon">
+              <MainButton variant="tertiary" size="icon">
                 <XMark />
-              </Button>
+              </MainButton>
             </DrawerClose>
           }
         />
@@ -138,11 +138,15 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
 
         <div className="flex-grow" />
         <div className="px-6 flex flex-col gap-4 mt-4 shrink-0 pb-6">
-          <Button variant="secondary" onClick={handleLogout} className="w-full">
+          <MainButton
+            variant="secondary"
+            onClick={handleLogout}
+            className="w-full"
+          >
             Disconnect
-          </Button>
+          </MainButton>
           <AlertDialogClose asChild>
-            <Button className="w-full">Go back</Button>
+            <MainButton className="w-full">Go back</MainButton>
           </AlertDialogClose>
         </div>
       </DrawerContent>

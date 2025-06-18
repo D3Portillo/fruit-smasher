@@ -231,6 +231,7 @@ export default function Home() {
       className="flex max-w-xl mx-auto flex-col h-dvh overflow-hidden"
       style={{
         paddingBottom: `${safePaddingBottom}px`,
+        backgroundColor: isAssetLoadComplete ? undefined : "white",
       }}
     >
       <div className="hidden">
@@ -483,7 +484,7 @@ export default function Home() {
         </Fragment>
       ) : (
         <div className="fixed inset-0 flex items-center justify-center">
-          <p className="text-white/60 font-medium">Loading...</p>
+          <p className="text-black/60 font-medium">Loading...</p>
         </div>
       )}
     </main>
