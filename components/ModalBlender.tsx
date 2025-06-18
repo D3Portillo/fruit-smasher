@@ -13,6 +13,7 @@ import {
 } from "@worldcoin/mini-apps-ui-kit-react"
 
 import { useWorldAuth } from "@radish-la/world-auth"
+import { useTapPopSound } from "@/lib/sounds"
 
 export default function ModalBlender({
   trigger,
@@ -20,6 +21,7 @@ export default function ModalBlender({
   trigger?: React.ReactNode
 }) {
   const { toast } = useToast()
+  const { withTapSound } = useTapPopSound()
   const { user, signIn, isConnected } = useWorldAuth()
 
   function handleSetupBlender() {
@@ -30,7 +32,9 @@ export default function ModalBlender({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogTrigger onClick={withTapSound()} asChild>
+        {trigger}
+      </AlertDialogTrigger>
       <AlertDialogContent className="[&_.size-10]:translate-x-2 [&_[aria-role=header]]:items-start [&_.size-10]:-translate-y-2">
         <AlertDialogHeader aria-role="header">
           <h2 className="text-2xl font-semibold">Fruit Blender 🍑</h2>

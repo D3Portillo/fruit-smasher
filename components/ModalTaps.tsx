@@ -21,6 +21,7 @@ import { getDispenserPayload } from "@/actions/dispenser"
 
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapsEarned } from "@/lib/atoms/game"
+import { useTapPopSound } from "@/lib/sounds"
 import { numberToShortWords } from "@/lib/numbers"
 import { worldClient } from "@/lib/world"
 
@@ -32,6 +33,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const [localStoredTaps] = useTapsEarned()
   const { toast } = useToast()
   const { signIn, address } = useWorldAuth()
+  const { withTapSound } = useTapPopSound()
 
   const {
     data: claimedTAPS = 0,
@@ -102,7 +104,9 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogTrigger onClick={withTapSound()} asChild>
+        {trigger}
+      </AlertDialogTrigger>
       <AlertDialogContent className="[&_.size-10]:translate-x-2 [&_[aria-role=header]]:items-start [&_.size-10]:-translate-y-2">
         <AlertDialogHeader aria-role="header">
           <h2 className="text-2xl font-semibold">Earned TAPS</h2>

@@ -24,24 +24,6 @@ export const VIBRATES = {
   heartbeat: () => vibrate([100, 100, 100, 100]), // Heartbeat pattern
 }
 
-export function useOnRouterBack({
-  onRouterBack,
-  isActive,
-}: {
-  onRouterBack: (e: PopStateEvent) => void
-  isActive: boolean
-}) {
-  useEffect(() => {
-    const handleRouteChange = (e: PopStateEvent) =>
-      isActive ? onRouterBack(e) : null
-
-    window.addEventListener("popstate", handleRouteChange as any)
-    return () => {
-      window.removeEventListener("popstate", handleRouteChange as any)
-    }
-  }, [onRouterBack, isActive])
-}
-
 /**
  * Helper function to toggle the route based on the active state.
  * This is useful for modals or drawers so we have a history state

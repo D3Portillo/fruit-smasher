@@ -23,6 +23,7 @@ import { beautifyAddress } from "@/lib/utils"
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useToggleRouteOnActive } from "@/lib/window"
 import { useTotalKilledMonsters } from "@/lib/atoms/game"
+import { useTapPopSound } from "@/lib/sounds"
 
 import { TbLogout } from "react-icons/tb"
 
@@ -38,15 +39,12 @@ export const MONSTER_ASSETS = {
   orange: asset_orange,
 } satisfies Record<MonsterTypes, StaticImageData>
 
-export default function ModalProfile({
-  trigger,
-}: {
-  trigger: JSX.Element | null
-}) {
+export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
   const TITLE = "Manage Profile"
   const [open, setOpen] = useState(false)
   const { killedMonsters } = useTotalKilledMonsters()
   const { signOut, user, address } = useWorldAuth()
+  const { withTapSound } = useTapPopSound()
 
   useToggleRouteOnActive({
     slug: "quests",
@@ -64,7 +62,11 @@ export default function ModalProfile({
 
   return (
     <Drawer open={open} onOpenChange={setOpen} height="full">
-      {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
+      {trigger && (
+        <DrawerTrigger onClick={withTapSound()} asChild>
+          {trigger}
+        </DrawerTrigger>
+      )}
 
       <DrawerContent>
         <VisuallyHidden>

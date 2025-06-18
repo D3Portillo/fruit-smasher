@@ -19,7 +19,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useTimer } from "@/lib/time"
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
-import { useAudioMachine } from "@/lib/sounds"
+import { useAudioMachine, useTapPopSound } from "@/lib/sounds"
 import { shuffleArray } from "@/lib/arrays"
 
 import {
@@ -42,7 +42,7 @@ import ExplodingDiv from "@/components/ExplodingDiv"
 import Blades from "@/components/sprites/Blades"
 
 import { FaBlender } from "react-icons/fa"
-import { isAnyModalOpen, useOnRouterBack, VIBRATES } from "@/lib/window"
+import { VIBRATES } from "@/lib/window"
 
 const TIME_TO_DRILL = 13 // seconds
 
@@ -72,7 +72,7 @@ export default function Home() {
   const [rotateKey, setRotateKey] = useState(0)
   const [monster, setMonster] = useAtom(atomMonster)
 
-  const { playSound, stopSound } = useAudioMachine([
+  const { playSound } = useAudioMachine([
     "pop1",
     "pop2",
     "pop3",
@@ -82,6 +82,8 @@ export default function Home() {
     "error",
     "bgx",
   ])
+
+  const { withTapSound } = useTapPopSound()
 
   function incrTapsGiven(amount: number) {
     // Round individually to avoid floating point issues
@@ -219,15 +221,6 @@ export default function Home() {
     />
   )
 
-  useOnRouterBack({
-    isActive: typeof window != "undefined" && !location.hash,
-    onRouterBack: () => {
-      // Early exit if any modal is open
-      if (isAnyModalOpen()) return
-      stopSound("bgx")
-    },
-  })
-
   return (
     <main
       className="flex max-w-xl mx-auto flex-col h-dvh overflow-hidden"
@@ -267,7 +260,10 @@ export default function Home() {
               }
             />
           ) : (
-            <button onClick={signIn} className="flex flex-col items-end">
+            <button
+              onClick={withTapSound(signIn)}
+              className="flex flex-col items-end"
+            >
               {PROFILE_IMAGE}
               <div className="text-xs mt-1 font-semibold">Connect</div>
             </button>
@@ -473,3 +469,7 @@ function getEmojiParticles(monsterType: MonsterTypes) {
 
   return [emoji, "💥", "🍊", "🔥", emoji]
 }
+
+// Feedback
+// TODO: Finish blender setup
+// TODO: Reduce image size or find a workaround to load faster (svg? or raw base64?)

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import { noOp } from "./utils"
 
 const ASSETS = {
+  tap: "/sound/tap.mp3",
   pop1: "/sound/pop1.mp3",
   pop2: "/sound/pop2.mp3",
   pop3: "/sound/pop3.mp3",
@@ -19,7 +20,7 @@ export const useAudioMachine = <T extends AudioAssets>(assets: Array<T>) => {
   const audioAssets = useRef(null as Record<T, HTMLAudioElement> | null)
 
   useEffect(() => {
-    audioAssets.current = Object.fromEntries(
+    const assetsMap = Object.fromEntries(
       assets.map((key) => {
         console.debug(`Loading audio asset: ${key}`)
         const audio = new Audio(ASSETS[key])
@@ -27,6 +28,17 @@ export const useAudioMachine = <T extends AudioAssets>(assets: Array<T>) => {
         return [key, audio]
       })
     ) as any
+
+    audioAssets.current = assetsMap
+
+    return () => {
+      // Cleanup: Stop and nullify all audio
+      Object.values(assetsMap).forEach((audio: any) => {
+        audio.pause()
+        audio.currentTime = 0
+      })
+      audioAssets.current = null
+    }
   }, assets)
 
   function getAudioAsset(type: T) {
@@ -58,4 +70,19 @@ export const useAudioMachine = <T extends AudioAssets>(assets: Array<T>) => {
   }
 }
 
-// TODO: Add "pop" sound on buttons - helper `withPopSound(e)`
+export const useTapPopSound = () => {
+  const { playSound } = useAudioMachine(["tap"])
+
+  function withTapSound<T>(
+    originalHandler?: (e: React.MouseEvent | React.TouchEvent) => T
+  ) {
+    return function handleTap(e: React.MouseEvent | React.TouchEvent) {
+      playSound("tap")
+      return originalHandler?.(e)
+    }
+  }
+
+  return {
+    withTapSound,
+  }
+}

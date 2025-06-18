@@ -16,6 +16,7 @@ import {
 
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapMultiplier } from "@/lib/atoms/game"
+import { useTapPopSound } from "@/lib/sounds"
 import { executeWorldPayment } from "@/actions/payments"
 import { calculatePriceForNextMultiplier } from "./internals"
 
@@ -28,6 +29,7 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
   const { toast } = useToast()
   const { signIn, address } = useWorldAuth()
   const { multiplier, setMultiplier } = useTapMultiplier()
+  const { withTapSound } = useTapPopSound()
 
   const isMaxedOut = multiplier >= MAX_MULTIPLIER
   const NEXT = multiplier + BASE_PURCHAGE_MULTIPLIER
@@ -59,7 +61,9 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogTrigger onClick={withTapSound()} asChild>
+        {trigger}
+      </AlertDialogTrigger>
       <AlertDialogContent className="[&_.size-10]:translate-x-2 [&_[aria-role=header]]:items-start [&_.size-10]:-translate-y-2">
         <AlertDialogHeader aria-role="header">
           <h2 className="text-2xl font-semibold">Damage Boost</h2>
