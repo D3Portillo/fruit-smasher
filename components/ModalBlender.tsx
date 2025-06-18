@@ -42,7 +42,11 @@ export default function ModalBlender({
       if (result?.status === "success") {
         setupBlender()
       }
+
+      // If the payment fails, we don't close the modal
+      return
     }
+
     if (availableTaps > 0) return collect()
     setIsOpen(false)
   }
