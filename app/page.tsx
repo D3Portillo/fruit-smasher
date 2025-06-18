@@ -1,9 +1,8 @@
 "use client"
 
-import { atomWithStorage } from "jotai/utils"
+import { Fragment, useEffect, useState } from "react"
 import { MiniKit } from "@worldcoin/minikit-js"
 import Image from "next/image"
-import { useEffect, useState } from "react"
 
 import {
   useTapMultiplier,
@@ -12,6 +11,7 @@ import {
 } from "@/lib/atoms/game"
 
 import { useAtom } from "jotai/react"
+import { atomWithStorage } from "jotai/utils"
 import { beautifyAddress, cn } from "@/lib/utils"
 import { numberToShortWords } from "@/lib/numbers"
 
@@ -56,6 +56,7 @@ const atomMonster = atomWithStorage("fs.current.monster", {
 let monsterMutexTimer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isGameStarted, setIsGameStarted] = useState(false)
+  const [loadedAsset, setLoadedAsset] = useState({} as Record<string, boolean>)
   const { isConnected, signIn, user, address } = useWorldAuth()
   const { toast } = useToast()
 
@@ -221,6 +222,10 @@ export default function Home() {
     />
   )
 
+  const isAssetLoadComplete = Object.keys(MONSTER_ASSETS).every(
+    (image) => loadedAsset[image]
+  )
+
   return (
     <main
       className="flex max-w-xl mx-auto flex-col h-dvh overflow-hidden"
@@ -228,230 +233,259 @@ export default function Home() {
         paddingBottom: `${safePaddingBottom}px`,
       }}
     >
-      <div className="bg-white flex flex-col flex-grow">
-        <nav className="flex h-24 px-5 pt-5 items-start justify-between">
-          <ModalTaps
-            trigger={
-              <button className="text-left">
-                <strong className="text-2xl">
-                  {tapsEarned <= 0
-                    ? "NO."
-                    : tapsEarned < 10
-                    ? `0${Math.floor(tapsEarned)}`
-                    : tapsEarned.toLocaleString("en-US", {
-                        maximumFractionDigits: 3,
-                      })}
-                </strong>
-                <p className="text-lg -mt-1.5 font-medium">TAPS</p>
-              </button>
-            }
-          />
-
-          {isConnected ? (
-            <ModalProfile
-              trigger={
-                <button className="flex flex-col items-end">
-                  {PROFILE_IMAGE}
-                  <div className="text-xs mt-1 font-semibold">
-                    {user?.username ||
-                      (address ? beautifyAddress(address, 4, "") : "Connected")}
-                  </div>
-                </button>
+      <div className="hidden">
+        {Object.entries(MONSTER_ASSETS).map(([monsterType, image]) => {
+          // Preload all monster images
+          return (
+            <Image
+              priority
+              onLoadingComplete={() =>
+                setLoadedAsset((prev) => ({ ...prev, [monsterType]: true }))
               }
+              key={`image-for-${monsterType}`}
+              src={image}
+              alt=""
             />
-          ) : (
-            <button
-              onClick={withTapSound(signIn)}
-              className="flex flex-col items-end"
-            >
-              {PROFILE_IMAGE}
-              <div className="text-xs mt-1 font-semibold">Connect</div>
-            </button>
-          )}
-        </nav>
-
-        <ClickSpawn
-          onTap={handleTap}
-          className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
-        >
-          <div
-            style={{
-              display: isGameStarted ? "flex" : "none",
-            }}
-            className="fixed text-fs-green justify-center items-end pointer-events-none bottom-20 left-0 right-0"
-          >
-            <motion.div
-              key={rotateKey}
-              style={{
-                scale: 2,
-                opacity: 1,
-                translateY: "70%",
-              }}
-              animate={{
-                rotate: rotateKey > 0 ? 360 : 0,
-                opacity: 0,
-              }}
-              transition={{ duration: 0.7, ease: "easeInOut" }}
-            >
-              <Blades className="w-[150vw]" />
-            </motion.div>
-          </div>
-
-          <div className="flex-grow pointer-events-none" />
-
-          <div
-            style={{
-              transition: "transform 50ms ease-out",
-            }}
-            className="flex group-active:scale-[0.975] select-none flex-grow items-center justify-center"
-          >
-            {isDrilling.active ? (
-              <AnimatePresence>
-                <HealthPoint
-                  id={-1}
-                  amount={isDrilling.impact}
-                  x={window.innerWidth * 0.45}
-                  y={window.innerHeight * 0.12}
-                />
-              </AnimatePresence>
-            ) : null}
-
-            <ExplodingDiv
-              fragmentCount={24}
-              className="w-[60vw] max-w-[14rem]"
-              fragmentEmojis={getEmojiParticles(monster.type)}
-              explode={IS_ENEMY_DEFEATED}
-            >
-              {DEFEATED_RATIO < 4 ? (
-                <EyesDead className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
-              ) : DEFEATED_RATIO < 37 ? (
-                <EyesAmazed className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
-              ) : (
-                <EyesMad className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
-              )}
-              <motion.div
-                animate={{
-                  rotate: isDrilling.active ? [0, -16, 0, -10, 0, -5, 0] : [],
-                }}
-                transition={{
-                  duration: 0.5,
-                  ease: "easeOut",
-                  times: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1],
-                }}
-              >
-                <Image
-                  key={`image-for-${monster.type}`}
-                  src={MONSTER_ASSETS[monster.type]}
-                  alt=""
-                />
-              </motion.div>
-            </ExplodingDiv>
-          </div>
-
-          <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
-            {isGameStarted ? (
-              <div className="w-full select-none px-5">
-                <h2 className="font-semibold whitespace-nowrap text-xl">
-                  {monster.name} (
-                  {ENEMY_HP < 1 ? "<1" : numberToShortWords(ENEMY_HP)} HP)
-                </h2>
-
-                <div className="bg-black/3 mt-2 w-full h-3.5 rounded-full overflow-auto border-3 border-black">
-                  <div
-                    style={{
-                      width: `${DEFEATED_RATIO}%`,
-                    }}
-                    className="h-full transition-all min-w-1 rounded-full bg-black"
-                  />
-                </div>
-              </div>
-            ) : (
-              <p className="leading-tight animate-pulse text-black/60 font-medium">
-                Tap the screen to smash the fruit ☝️
-              </p>
-            )}
-          </div>
-        </ClickSpawn>
+          )
+        })}
       </div>
 
-      <nav className="bg-black shrink-0 z-1 px-4 pb-1 h-14 [&_*:not(.clipper)]:z-1 [&_*:not(.clipper)]:relative relative flex items-end justify-between">
-        <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
+      {isAssetLoadComplete ? (
+        <Fragment>
+          <div className="bg-white flex flex-col flex-grow">
+            <nav className="flex h-24 px-5 pt-5 items-start justify-between">
+              <ModalTaps
+                trigger={
+                  <button className="text-left">
+                    <strong className="text-2xl">
+                      {tapsEarned <= 0
+                        ? "NO."
+                        : tapsEarned < 10
+                        ? `0${Math.floor(tapsEarned)}`
+                        : tapsEarned.toLocaleString("en-US", {
+                            maximumFractionDigits: 3,
+                          })}
+                    </strong>
+                    <p className="text-lg -mt-1.5 font-medium">TAPS</p>
+                  </button>
+                }
+              />
 
-        <div className="w-32 flex justify-start">
-          <ModalBlender
-            trigger={
-              <button className="p-2 text-left relative text-white">
-                <div className="absolute top-2.5 left-1 text-2xl rotate-12">
-                  🫐
-                </div>
-                <FaBlender className="text-4xl" />
-                <strong>1.43K</strong>
-              </button>
-            }
-          />
-        </div>
-
-        <section className="flex flex-col">
-          <button
-            onClick={handleBladeTrigger}
-            className="bg-white shrink-0 outline-none group size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
-          >
-            <EnergyPortal isActive={isDrillReady} />
-
-            <motion.div
-              key={rotateKey}
-              animate={rotateKey > 0 ? { rotate: 360 } : {}}
-              transition={{ duration: 0.7, ease: "easeInOut" }}
-              onAnimationComplete={() =>
-                setIsDrilling({
-                  impact: 0,
-                  active: false,
-                })
-              }
-            >
-              <Blades className="w-20 scale-105" />
-            </motion.div>
-          </button>
-
-          <div
-            className={cn(
-              isDrillReady
-                ? "font-bold text-fs-green"
-                : "font-medium text-white/50",
-              "text-xs text-center mt-0.5 pb-2"
-            )}
-          >
-            {isDrillReady ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
-          </div>
-        </section>
-
-        <div className="w-32 flex text-white justify-end">
-          <ModalBoost
-            trigger={
-              <button className="p-2">
-                <svg
-                  className="w-[1em] text-3xl"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 30 40"
-                  fill="none"
+              {isConnected ? (
+                <ModalProfile
+                  trigger={
+                    <button className="flex flex-col items-end">
+                      {PROFILE_IMAGE}
+                      <div className="text-xs mt-1 font-semibold">
+                        {user?.username ||
+                          (address
+                            ? beautifyAddress(address, 4, "")
+                            : "Connected")}
+                      </div>
+                    </button>
+                  }
+                />
+              ) : (
+                <button
+                  onClick={withTapSound(signIn)}
+                  className="flex flex-col items-end"
                 >
-                  <path
-                    fill="currentColor"
-                    fill-rule="evenodd"
-                    d="M3.63 12.25a7.87 7.87 0 1 1 15.75 0 1.75 1.75 0 0 0 3.5 0 11.37 11.37 0 1 0-22.75 0 1.75 1.75 0 0 0 3.5 0ZM10 7.54a9.8 9.8 0 0 1 2.58-.02c1.9.25 3.1 1.93 3.27 3.73.2 2.19.44 5.2.47 7l.87.19c2.1.42 4.9.99 7.24 2.02a9.42 9.42 0 0 1 3.59 2.53 5.27 5.27 0 0 1 1.12 4.19 41.96 41.96 0 0 1-1.7 7.32 7.32 7.32 0 0 1-6.15 5.03c-3.4.39-6.83.38-10.22-.06-2.47-.32-4.76-1.6-5.93-3.88a26.9 26.9 0 0 1-2.52-8.07 5.3 5.3 0 0 1 1.7-4.69l2.36-2.2c0-4.58.11-7.61.22-9.5.1-1.75 1.28-3.33 3.1-3.59"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                {isMaxedOut ? (
-                  <strong className="text-fs-purple">MAX</strong>
+                  {PROFILE_IMAGE}
+                  <div className="text-xs mt-1 font-semibold">Connect</div>
+                </button>
+              )}
+            </nav>
+
+            <ClickSpawn
+              onTap={handleTap}
+              className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
+            >
+              <div
+                style={{
+                  display: isGameStarted ? "flex" : "none",
+                }}
+                className="fixed text-fs-green justify-center items-end pointer-events-none bottom-20 left-0 right-0"
+              >
+                <motion.div
+                  key={rotateKey}
+                  style={{
+                    scale: 2,
+                    opacity: 1,
+                    translateY: "70%",
+                  }}
+                  animate={{
+                    rotate: rotateKey > 0 ? 360 : 0,
+                    opacity: 0,
+                  }}
+                  transition={{ duration: 0.7, ease: "easeInOut" }}
+                >
+                  <Blades className="w-[150vw]" />
+                </motion.div>
+              </div>
+
+              <div className="flex-grow pointer-events-none" />
+
+              <div
+                style={{
+                  transition: "transform 50ms ease-out",
+                }}
+                className="flex group-active:scale-[0.975] select-none flex-grow items-center justify-center"
+              >
+                {isDrilling.active ? (
+                  <AnimatePresence>
+                    <HealthPoint
+                      id={-1}
+                      amount={isDrilling.impact}
+                      x={window.innerWidth * 0.45}
+                      y={window.innerHeight * 0.12}
+                    />
+                  </AnimatePresence>
+                ) : null}
+
+                <ExplodingDiv
+                  fragmentCount={24}
+                  className="w-[60vw] max-w-[14rem]"
+                  fragmentEmojis={getEmojiParticles(monster.type)}
+                  explode={IS_ENEMY_DEFEATED}
+                >
+                  {DEFEATED_RATIO < 4 ? (
+                    <EyesDead className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+                  ) : DEFEATED_RATIO < 37 ? (
+                    <EyesAmazed className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+                  ) : (
+                    <EyesMad className="w-1/2 z-1 absolute left-1/4 bottom-1/4" />
+                  )}
+                  <motion.div
+                    animate={{
+                      rotate: isDrilling.active
+                        ? [0, -16, 0, -10, 0, -5, 0]
+                        : [],
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      ease: "easeOut",
+                      times: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1],
+                    }}
+                  >
+                    <Image
+                      className="w-full"
+                      src={MONSTER_ASSETS[monster.type]}
+                      alt=""
+                    />
+                  </motion.div>
+                </ExplodingDiv>
+              </div>
+
+              <div className="min-h-24 pointer-events-none mb-20 w-full flex items-end justify-center">
+                {isGameStarted ? (
+                  <div className="w-full select-none px-5">
+                    <h2 className="font-semibold whitespace-nowrap text-xl">
+                      {monster.name} (
+                      {ENEMY_HP < 1 ? "<1" : numberToShortWords(ENEMY_HP)} HP)
+                    </h2>
+
+                    <div className="bg-black/3 mt-2 w-full h-3.5 rounded-full overflow-auto border-3 border-black">
+                      <div
+                        style={{
+                          width: `${DEFEATED_RATIO}%`,
+                        }}
+                        className="h-full transition-all min-w-1 rounded-full bg-black"
+                      />
+                    </div>
+                  </div>
                 ) : (
-                  <strong>x{multiplier.toFixed(1)}</strong>
+                  <p className="leading-tight animate-pulse text-black/60 font-medium">
+                    Tap the screen to smash the fruit ☝️
+                  </p>
                 )}
+              </div>
+            </ClickSpawn>
+          </div>
+
+          <nav className="bg-black shrink-0 z-1 px-4 pb-1 h-14 [&_*:not(.clipper)]:z-1 [&_*:not(.clipper)]:relative relative flex items-end justify-between">
+            <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
+
+            <div className="w-32 flex justify-start">
+              <ModalBlender
+                trigger={
+                  <button className="p-2 text-left relative text-white">
+                    <div className="absolute top-2.5 left-1 text-2xl rotate-12">
+                      🫐
+                    </div>
+                    <FaBlender className="text-4xl" />
+                    <strong>1.43K</strong>
+                  </button>
+                }
+              />
+            </div>
+
+            <section className="flex flex-col">
+              <button
+                onClick={handleBladeTrigger}
+                className="bg-white shrink-0 outline-none group size-32 border-[0.6rem] border-black rounded-full flex items-center justify-center"
+              >
+                <EnergyPortal isActive={isDrillReady} />
+
+                <motion.div
+                  key={rotateKey}
+                  animate={rotateKey > 0 ? { rotate: 360 } : {}}
+                  transition={{ duration: 0.7, ease: "easeInOut" }}
+                  onAnimationComplete={() =>
+                    setIsDrilling({
+                      impact: 0,
+                      active: false,
+                    })
+                  }
+                >
+                  <Blades className="w-20 scale-105" />
+                </motion.div>
               </button>
-            }
-          />
+
+              <div
+                className={cn(
+                  isDrillReady
+                    ? "font-bold text-fs-green"
+                    : "font-medium text-white/50",
+                  "text-xs text-center mt-0.5 pb-2"
+                )}
+              >
+                {isDrillReady ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
+              </div>
+            </section>
+
+            <div className="w-32 flex text-white justify-end">
+              <ModalBoost
+                trigger={
+                  <button className="p-2">
+                    <svg
+                      className="w-[1em] text-3xl"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 30 40"
+                      fill="none"
+                    >
+                      <path
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        d="M3.63 12.25a7.87 7.87 0 1 1 15.75 0 1.75 1.75 0 0 0 3.5 0 11.37 11.37 0 1 0-22.75 0 1.75 1.75 0 0 0 3.5 0ZM10 7.54a9.8 9.8 0 0 1 2.58-.02c1.9.25 3.1 1.93 3.27 3.73.2 2.19.44 5.2.47 7l.87.19c2.1.42 4.9.99 7.24 2.02a9.42 9.42 0 0 1 3.59 2.53 5.27 5.27 0 0 1 1.12 4.19 41.96 41.96 0 0 1-1.7 7.32 7.32 7.32 0 0 1-6.15 5.03c-3.4.39-6.83.38-10.22-.06-2.47-.32-4.76-1.6-5.93-3.88a26.9 26.9 0 0 1-2.52-8.07 5.3 5.3 0 0 1 1.7-4.69l2.36-2.2c0-4.58.11-7.61.22-9.5.1-1.75 1.28-3.33 3.1-3.59"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                    {isMaxedOut ? (
+                      <strong className="text-fs-purple">MAX</strong>
+                    ) : (
+                      <strong>x{multiplier.toFixed(1)}</strong>
+                    )}
+                  </button>
+                }
+              />
+            </div>
+          </nav>
+        </Fragment>
+      ) : (
+        <div className="fixed inset-0 flex items-center justify-center">
+          <p className="text-white/60 font-medium">Loading...</p>
         </div>
-      </nav>
+      )}
     </main>
   )
 }

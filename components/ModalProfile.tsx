@@ -37,7 +37,7 @@ export const MONSTER_ASSETS = {
   pineapple: asset_pineapple,
   watermelon: asset_watermelon,
   orange: asset_orange,
-} satisfies Record<MonsterTypes, StaticImageData>
+} as Record<MonsterTypes, StaticImageData>
 
 export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
   const TITLE = "Manage Profile"
