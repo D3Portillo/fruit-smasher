@@ -16,11 +16,12 @@ import { beautifyAddress, cn } from "@/lib/utils"
 import { numberToShortWords } from "@/lib/numbers"
 
 import { AnimatePresence, motion } from "framer-motion"
+
+import { shuffleArray } from "@/lib/arrays"
 import { useTimer } from "@/lib/time"
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useToast } from "@worldcoin/mini-apps-ui-kit-react"
 import { useAudioMachine, useTapPopSound } from "@/lib/sounds"
-import { shuffleArray } from "@/lib/arrays"
 
 import {
   getRandomMonsterName,
@@ -32,16 +33,15 @@ import EnergyPortal from "@/components/EnergyPortal"
 import ModalTaps from "@/components/ModalTaps"
 import ModalBoost from "@/components/ModalBoost"
 import ModalProfile, { MONSTER_ASSETS } from "@/components/ModalProfile"
-import ModalBlender from "@/components/ModalBlender"
 
 import EyesMad from "@/components/sprites/EyesMad"
 import EyesAmazed from "@/components/sprites/EyesAmazed"
+import TriggerBlenderSetup from "@/components/TriggerBlenderSetup"
 import EyesDead from "@/components/sprites/EyesDead"
 import ClickSpawn, { HealthPoint } from "@/components/ClickSpawn"
 import ExplodingDiv from "@/components/ExplodingDiv"
 import Blades from "@/components/sprites/Blades"
 
-import { FaBlender } from "react-icons/fa"
 import { VIBRATES } from "@/lib/window"
 
 const TIME_TO_DRILL = 13 // seconds
@@ -406,19 +406,7 @@ export default function Home() {
           <nav className="bg-black shrink-0 z-1 px-4 pb-1 h-14 [&_*:not(.clipper)]:z-1 [&_*:not(.clipper)]:relative relative flex items-end justify-between">
             <div className="h-[125%] clipper bg-black rounded-t-[100%] absolute -inset-x-6 bottom-full"></div>
 
-            <div className="w-32 flex justify-start">
-              <ModalBlender
-                trigger={
-                  <button className="p-2 text-left relative text-white">
-                    <div className="absolute top-2.5 left-1 text-2xl rotate-12">
-                      🫐
-                    </div>
-                    <FaBlender className="text-4xl" />
-                    <strong>1.43K</strong>
-                  </button>
-                }
-              />
-            </div>
+            <TriggerBlenderSetup />
 
             <section className="flex flex-col">
               <button
@@ -503,7 +491,3 @@ function getEmojiParticles(monsterType: MonsterTypes) {
 
   return [emoji, "💥", "🍊", "🔥", emoji]
 }
-
-// Feedback
-// TODO: Finish blender setup
-// TODO: Reduce image size or find a workaround to load faster (svg? or raw base64?)

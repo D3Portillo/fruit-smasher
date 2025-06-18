@@ -119,7 +119,7 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
                 className="border-3 flex items-center gap-2 border-black rounded-2xl py-3 pl-3 pr-5"
               >
                 <figure className="rounded-xl shrink-0 overflow-hidden flex items-center justify-center size-11 drop-shadow p-1 bg-gradient-to-br from-fs-purple to-fs-green">
-                  <Image placeholder="blur" src={image} alt="" />
+                  <Image src={image} alt="" />
                 </figure>
                 <div className="text-sm leading-none font-semibold capitalize">
                   {monsterType}s Smashed

@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { useState } from "react"
 import useSWR from "swr"
 
 import {
@@ -28,6 +28,7 @@ import { ADDRESS_DISPENSER } from "@/lib/constants"
 import { ABI_DISPENSER } from "@/lib/abis"
 
 import MainButton from "./MainButton"
+import ChildrenWrapper from "./ChildrenWrapper"
 
 export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -65,7 +66,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
       Math.max(0, localStoredTaps - claimedTAPS)
     : 0
   const isClaiming = claimableTAPS > 0
-  const ActionContainer = isClaiming ? Fragment : AlertDialogClose
+  const ActionContainer = isClaiming ? ChildrenWrapper : AlertDialogClose
 
   async function handleClaim() {
     if (!address) return signIn()

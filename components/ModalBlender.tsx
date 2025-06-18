@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import {
   AlertDialog,
   AlertDialogContent,
@@ -7,31 +9,46 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
-  useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
 
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapPopSound } from "@/lib/sounds"
+import { useBlender } from "@/lib/atoms/blender"
 
 import MainButton from "./MainButton"
+import { executeWorldPayment } from "@/actions/payments"
 
 export default function ModalBlender({
   trigger,
 }: {
   trigger?: React.ReactNode
 }) {
-  const { toast } = useToast()
-  const { withTapSound } = useTapPopSound()
-  const { user, signIn, isConnected } = useWorldAuth()
+  const [isOpen, setIsOpen] = useState(false)
 
-  function handleSetupBlender() {
-    toast.error({
-      title: "Feature not available yet",
-    })
+  const { withTapSound } = useTapPopSound()
+  const { setupBlender, isSetup, collect, availableTaps } = useBlender()
+  const { address, signIn } = useWorldAuth()
+
+  async function handleSetupBlender() {
+    if (!address) return signIn()
+    if (!isSetup) {
+      const result = await executeWorldPayment({
+        amount: 1, // 1 WLD to setup the blender
+        initiatorAddress: address,
+        paymentDescription: `Initialize fruit blender`,
+        token: "WLD",
+      })
+
+      if (result?.status === "success") {
+        setupBlender()
+      }
+    }
+    if (availableTaps > 0) return collect()
+    setIsOpen(false)
   }
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger onClick={withTapSound()} asChild>
         {trigger}
       </AlertDialogTrigger>
@@ -48,7 +65,15 @@ export default function ModalBlender({
         </AlertDialogDescription>
         <div className="my-2" />
         <AlertDialogFooter>
-          <MainButton onClick={handleSetupBlender}>Setup Blender</MainButton>
+          <MainButton onClick={handleSetupBlender}>
+            {address
+              ? isSetup
+                ? availableTaps > 0
+                  ? `Collect ${availableTaps} TAPS`
+                  : "Continue playing"
+                : "Setup Blender"
+              : "Connet Wallet"}
+          </MainButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

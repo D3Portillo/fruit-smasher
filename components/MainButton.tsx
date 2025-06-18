@@ -24,7 +24,7 @@ export default function MainButton({
   return (
     <Button
       onClick={withTapSound(onClick)}
-      className={cn("w-full", className)}
+      className={cn(size !== "icon" && "w-full", className)}
       variant={variant}
       size={size}
     >

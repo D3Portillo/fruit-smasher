@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { useState } from "react"
 
 import {
   AlertDialog,
@@ -12,13 +12,15 @@ import {
   AlertDialogTrigger,
   useToast,
 } from "@worldcoin/mini-apps-ui-kit-react"
-import MainButton from "@/components/MainButton"
 
 import { useWorldAuth } from "@radish-la/world-auth"
 import { useTapMultiplier } from "@/lib/atoms/game"
 import { useTapPopSound } from "@/lib/sounds"
 import { executeWorldPayment } from "@/actions/payments"
 import { calculatePriceForNextMultiplier } from "./internals"
+
+import MainButton from "@/components/MainButton"
+import ChildrenWrapper from "../ChildrenWrapper"
 
 const BASE_PURCHAGE_MULTIPLIER = 0.1 // 0.1x extra taps per second (TPS)
 export const MAX_MULTIPLIER = 2.5 // Maximum multiplier cap
@@ -42,7 +44,7 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
     const result = await executeWorldPayment({
       amount: PRICE,
       initiatorAddress: address,
-      paymentDescription: `Upgradem ultiplier to ${NEXT.toFixed(1)}`,
+      paymentDescription: `Upgrade ultiplier to ${NEXT.toFixed(1)}`,
       token: "WLD",
     })
 
@@ -57,7 +59,7 @@ export default function ModalBoost({ trigger }: { trigger?: React.ReactNode }) {
     }
   }
 
-  const ActionContainer = isMaxedOut ? AlertDialogClose : Fragment
+  const ActionContainer = isMaxedOut ? AlertDialogClose : ChildrenWrapper
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
