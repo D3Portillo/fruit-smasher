@@ -6,8 +6,8 @@ import { atom, useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import { useTapsEarned } from "./game"
 
-const MAX_TAPS = 1_200 // 1200 TAPS
-const TAPS_PER_SEC = 1 // 1 TAP per second
+const MAX_TAPS = 1_250 // 1200 TAPS
+const TAPS_PER_SEC = 0.5 // 1 TAP per second
 
 const atomBlender = atomWithStorage("fs.blender", {
   isSetup: false,
