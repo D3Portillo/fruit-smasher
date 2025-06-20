@@ -55,9 +55,8 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
     },
   })
 
-  function handleLogout() {
-    signOut()
-    setOpen(false)
+  function handleTelegram() {
+    window.open("https://t.me/+1Su2YALGyFJjNGU5", "_blank", "noopener")
   }
 
   return (
@@ -83,7 +82,7 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
           }
         />
 
-        <div className="no-scrollbar grid grid-cols-1 gap-4 mt-4 px-6 w-full overflow-auto">
+        <div className="mx-6 my-3">
           <div className="border-3 bg-gradient-to-bl from-fs-purple/10 to-fs-purple/20 flex items-center gap-2 border-black rounded-2xl py-3 pl-3 pr-4">
             <figure
               style={{
@@ -104,13 +103,17 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
               <TbLogout />
             </button>
           </div>
+        </div>
 
-          <div className="-mx-6 flex items-center h-10 relative">
-            <div className="h-[2px] bg-black w-full" />
-            <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
-              GAME STATS
-            </strong>
-          </div>
+        <div className="flex items-center h-10 relative">
+          <div className="h-[2px] bg-black w-full" />
+          <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
+            GAME STATS
+          </strong>
+        </div>
+
+        <div className="no-scrollbar relative grid grid-cols-1 gap-4 px-6 w-full overflow-auto">
+          <div className="w-full -mb-4 sticky z-1 bg-gradient-to-b from-white/100 to-white/0 h-4 top-0" />
 
           {Object.entries(MONSTER_ASSETS).map(([monsterType, image]) => {
             return (
@@ -134,19 +137,24 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
               </div>
             )
           })}
+
+          <div className="w-full -mt-4 sticky z-1 bg-gradient-to-t from-white/100 to-white/0 h-4 bottom-0" />
+        </div>
+
+        <div className="flex items-center h-10 relative">
+          <div className="h-[2px] bg-black w-full" />
+          <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
+            SOCIALS & MORE
+          </strong>
         </div>
 
         <div className="flex-grow" />
         <div className="px-6 flex flex-col gap-4 mt-4 shrink-0 pb-6">
-          <MainButton
-            variant="secondary"
-            onClick={handleLogout}
-            className="w-full"
-          >
-            Disconnect
+          <MainButton variant="secondary" onClick={handleTelegram}>
+            Join Telegram
           </MainButton>
           <AlertDialogClose asChild>
-            <MainButton className="w-full">Go back</MainButton>
+            <MainButton>Return to game</MainButton>
           </AlertDialogClose>
         </div>
       </DrawerContent>

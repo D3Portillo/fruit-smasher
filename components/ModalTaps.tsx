@@ -130,10 +130,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
         <div className="my-2" />
         <AlertDialogFooter>
           <ActionContainer asChild>
-            <MainButton
-              onClick={isClaiming ? handleClaim : undefined}
-              className="w-full"
-            >
+            <MainButton onClick={isClaiming ? handleClaim : undefined}>
               {isClaiming
                 ? `Claim ${numberToShortWords(claimableTAPS)} TAPS`
                 : "Got it"}
