@@ -19,3 +19,14 @@ export function calculatePriceForNextMultiplier(nextMultiplier: number) {
 
   return Number(price.toFixed(2))
 }
+
+export const tapPowerCurve = (
+  multiplier: number, // e.g. 1.1 to 2.5
+  maxPower = 4,
+  curve = 0.6 // Lower means faster growth at start
+): number => {
+  if (multiplier < 1) return MIN_MULTIPLIER
+  const NORMALIZED = (multiplier - 1) / (MAX_MULTIPLIER - 1) // normalize to 0-1
+  const SCALED = Math.pow(NORMALIZED, curve)
+  return MIN_MULTIPLIER + (maxPower - MIN_MULTIPLIER) * SCALED
+}

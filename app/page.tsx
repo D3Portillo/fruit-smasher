@@ -42,7 +42,7 @@ import ClickSpawn, { HealthPoint } from "@/components/ClickSpawn"
 import ExplodingDiv from "@/components/ExplodingDiv"
 import Blades from "@/components/sprites/Blades"
 
-import { VIBRATES } from "@/lib/window"
+import { tapPowerCurve } from "@/components/ModalBoost/internals"
 
 const TIME_TO_DRILL = 13 // seconds
 
@@ -126,7 +126,6 @@ export default function Home() {
     if (IS_ENEMY_DEFEATED && tapsForEnemy > 2) {
       monsterMutexTimer = setTimeout(() => {
         playSound("cry")
-        VIBRATES.success()
         generateNewMonster()
       }, 75)
     }
@@ -146,32 +145,30 @@ export default function Home() {
   function handleTap() {
     _checkGameStarted()
 
-    const BASE_TAP = multiplier // At least give multiplier ratio
+    const BASE_TAP = tapPowerCurve(multiplier) // Curve power from 1-6 based on multiplier
+    // So users feel more the "difference" even for small upgrades
+
     const BIG_TAP =
-      1 +
       BASE_TAP +
       Math.round(
         Math.random() *
-          (5 *
+          (6 *
             // Cap to 1.4x multiplier
             // So max extra value is 7
             Math.min(1.4, multiplier))
       )
 
     const rand = Math.random()
-    const isBigTap = rand < 0.15 || rand > 0.85 // 15-30% chance of big tap
+    const isBigTap = rand < 0.14 || rand > 0.86 // 14 - 28% big tap chance
 
     const DAMAGE = Math.round(
-      // Cap to 2x multiplier so max TOTAL damage is 20
-      multiplier * (isBigTap ? BIG_TAP : Math.min(2, BASE_TAP))
+      // Cap to 2.1x multiplier's MAX damage
+      multiplier * (isBigTap ? BIG_TAP : Math.min(2.1, BASE_TAP))
     )
 
     incrTapsGiven(DAMAGE)
 
-    if (isBigTap) {
-      playSound("hitlong")
-      VIBRATES.tap()
-    }
+    if (isBigTap) playSound("hitlong")
 
     const randomPop = 1 + Math.floor(Math.random() * 3)
     playSound(`pop${randomPop}` as any, "0.75")
@@ -194,9 +191,8 @@ export default function Home() {
     _checkGameStarted()
 
     playSound("cry")
-    VIBRATES.doubleTap()
 
-    const IMPACT = 48 + Math.round(Math.random() * 72) // 48-120 damage
+    const IMPACT = 49 + Math.round(Math.random() * 71) // 48-120 damage
     setIsDrilling({
       active: true,
       impact: IMPACT,
