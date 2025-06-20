@@ -6,7 +6,7 @@ import { numberToShortWords } from "@/lib/numbers"
 import ModalBlender from "./ModalBlender"
 
 export default function TriggerBlenderSetup() {
-  const { availableTaps } = useBlender()
+  const { availableTaps, isSetup } = useBlender()
 
   return (
     <div className="w-32 flex justify-start">
@@ -16,7 +16,11 @@ export default function TriggerBlenderSetup() {
             <div className="absolute top-2.5 left-1 text-2xl rotate-12">🫐</div>
             <FaBlender className="text-4xl" />
             <strong className="block text-center pl-1 mx-auto">
-              {availableTaps > 0 ? numberToShortWords(availableTaps) : "N/A"}
+              {isSetup
+                ? availableTaps > 0
+                  ? numberToShortWords(availableTaps)
+                  : "N/A"
+                : "OFF"}
             </strong>
           </button>
         }

@@ -73,7 +73,7 @@ export default function ModalBlender({
             {address
               ? isSetup
                 ? availableTaps > 0
-                  ? `Collect ${availableTaps} TAPS`
+                  ? `Collect ${availableTaps.toLocaleString("en-US")} TAPS`
                   : "Continue playing"
                 : "Setup Blender"
               : "Connet Wallet"}
