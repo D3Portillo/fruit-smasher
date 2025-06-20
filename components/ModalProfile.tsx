@@ -2,7 +2,7 @@
 
 import type { MonsterTypes } from "@/lib/game"
 
-import { useState } from "react"
+import { type PropsWithChildren, useState } from "react"
 import Image, { type StaticImageData } from "next/image"
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
@@ -82,7 +82,7 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
           }
         />
 
-        <div className="mx-6 my-3">
+        <div className="mx-6 mt-2 mb-3">
           <div className="border-3 bg-gradient-to-bl from-fs-purple/10 to-fs-purple/20 flex items-center gap-2 border-black rounded-2xl py-3 pl-3 pr-4">
             <figure
               style={{
@@ -105,15 +105,10 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
           </div>
         </div>
 
-        <div className="flex items-center h-10 relative">
-          <div className="h-[2px] bg-black w-full" />
-          <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
-            GAME STATS
-          </strong>
-        </div>
+        <HeaderTitle>GAME STATS</HeaderTitle>
 
         <div className="no-scrollbar relative grid grid-cols-1 gap-4 px-6 w-full overflow-auto">
-          <div className="w-full -mb-4 sticky z-1 bg-gradient-to-b from-white/100 to-white/0 h-4 top-0" />
+          <div className="w-full -mb-3 sticky z-1 bg-gradient-to-b from-white/100 to-white/0 h-3 top-0" />
 
           {Object.entries(MONSTER_ASSETS).map(([monsterType, image]) => {
             return (
@@ -141,12 +136,7 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
           <div className="w-full -mt-4 sticky z-1 bg-gradient-to-t from-white/100 to-white/0 h-4 bottom-0" />
         </div>
 
-        <div className="flex items-center h-10 relative">
-          <div className="h-[2px] bg-black w-full" />
-          <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
-            SOCIALS & MORE
-          </strong>
-        </div>
+        <HeaderTitle>SOCIALS & MORE</HeaderTitle>
 
         <div className="flex-grow" />
         <div className="px-6 flex flex-col gap-4 mt-4 shrink-0 pb-6">
@@ -159,5 +149,16 @@ export default function ModalProfile({ trigger }: { trigger?: JSX.Element }) {
         </div>
       </DrawerContent>
     </Drawer>
+  )
+}
+
+function HeaderTitle({ children }: PropsWithChildren) {
+  return (
+    <div className="flex items-center h-11 relative">
+      <div className="h-[2px] bg-black w-full" />
+      <strong className="absolute px-4 bg-white top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
+        {children}
+      </strong>
+    </div>
   )
 }
