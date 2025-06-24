@@ -148,11 +148,13 @@ export default function Home() {
     const BASE_TAP = tapPowerCurve(multiplier) // Curve power from 1-6 based on multiplier
     // So users feel more the "difference" even for small upgrades
 
+    const MAX_SINGLE_TAP = 4 // Reduce tap power
+
     const BIG_TAP =
       BASE_TAP +
       Math.round(
         Math.random() *
-          (6 *
+          (MAX_SINGLE_TAP *
             // Cap to 1.4x multiplier
             // So max extra value is 7
             Math.min(1.4, multiplier))
