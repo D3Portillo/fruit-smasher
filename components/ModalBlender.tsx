@@ -43,7 +43,7 @@ export default function ModalBlender({
         setupBlender()
       }
 
-      // If the payment fails, we don't close the modal
+      // Don't continue with conditional branching
       return
     }
 

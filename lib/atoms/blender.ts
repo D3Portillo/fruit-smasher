@@ -83,8 +83,9 @@ export const useBlender = () => {
 
       setTapsEarned((prev) => prev + availableTaps)
       toast.success({
-        title: `Collected ${availableTaps} TAPS!`,
+        title: `Collected ${availableTaps.toLocaleString("en-US")} TAPS!`,
       })
+
       setBlender((prev) => ({
         ...prev,
         idleTimestamp: Date.now(), // Reset timestamp
