@@ -53,6 +53,8 @@ const atomMonster = atomWithStorage("fs.current.monster", {
   type: "pineapple" as MonsterTypes,
 })
 
+const BLADE_IMPACT_RANGE = [35, 80] // min, max impact damage
+
 let monsterMutexTimer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isGameStarted, setIsGameStarted] = useState(false)
@@ -148,24 +150,23 @@ export default function Home() {
     const BASE_TAP = tapPowerCurve(multiplier) // Curve power from 1-6 based on multiplier
     // So users feel more the "difference" even for small upgrades
 
-    const MAX_SINGLE_TAP = 4 // Reduce tap power
+    const MAX_SINGLE_TAP = 3.5 // Reduce tap power
 
     const BIG_TAP =
       BASE_TAP +
       Math.round(
         Math.random() *
           (MAX_SINGLE_TAP *
-            // Cap to 1.4x multiplier
-            // So max extra value is 7
-            Math.min(1.4, multiplier))
+            // Cap to 1.x multiplier
+            Math.min(1.3, multiplier))
       )
 
     const rand = Math.random()
     const isBigTap = rand < 0.14 || rand > 0.86 // 14 - 28% big tap chance
 
     const DAMAGE = Math.round(
-      // Cap to 2.1x multiplier's MAX damage
-      multiplier * (isBigTap ? BIG_TAP : Math.min(2.1, BASE_TAP))
+      // Cap to 2x multiplier's MAX damage
+      multiplier * (isBigTap ? BIG_TAP : Math.min(2, BASE_TAP))
     )
 
     incrTapsGiven(DAMAGE)
@@ -194,7 +195,10 @@ export default function Home() {
 
     playSound("cry")
 
-    const IMPACT = 49 + Math.round(Math.random() * 71) // 48-120 damage
+    const [BLADE_MIN, BLADE_MAX] = BLADE_IMPACT_RANGE
+    const IMPACT =
+      // Impact is a random value between BLADE_MIN and BLADE_MAX
+      BLADE_MIN + Math.round(Math.random() * (BLADE_MAX - BLADE_MIN))
     setIsDrilling({
       active: true,
       impact: IMPACT,
