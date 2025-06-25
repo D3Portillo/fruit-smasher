@@ -44,6 +44,21 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const { playSound } = useAudioMachine(["setup"])
   const { withTapSound } = useTapPopSound()
 
+  const { data: balance = 0 } = useSWR(
+    address ? `balance.taps.${address}` : null,
+    async () => {
+      if (!address) return 0
+      const balance = await worldClient.readContract({
+        address: ADDRESS_TAPS,
+        functionName: "balanceOf",
+        abi: erc20Abi,
+        args: [address],
+      })
+
+      return Number(formatEther(balance))
+    }
+  )
+
   const {
     incrementBladeLevel,
     isMaxedOut: isMaxedBlades,
@@ -121,6 +136,13 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
   async function handleUpgrade() {
     if (!address) return signIn()
+
+    if (balance < nextLevelData.costInTAPS) {
+      return toast.error({
+        title: "Insufficient TAPS Balance",
+      })
+    }
+
     const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
       transaction: [
         {
@@ -216,7 +238,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                   </p>
 
                   <div className="flex gap-4 p-3 border-3 border-black rounded-2xl mt-4 items-center justify-evenly">
-                    <Blades className="size-20 animate-[spin_4s_linear_infinite] text-black" />
+                    <Blades className="size-20 animate-[spin_6s_linear_infinite] text-black" />
                     <div className="whitespace-nowrap">
                       <p className="text-lg text-black font-semibold">
                         Blades{" "}
