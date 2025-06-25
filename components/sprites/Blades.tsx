@@ -1,5 +1,24 @@
 import { cn } from "@/lib/utils"
 
+export const BLADE_LEVELS = [
+  {
+    costInTAPS: 0, // Default power
+    damageRange: [35, 80], // min, max impact damage
+  },
+  {
+    costInTAPS: 13_000,
+    damageRange: [50, 95],
+  },
+  {
+    costInTAPS: 25_000,
+    damageRange: [65, 120],
+  },
+  {
+    costInTAPS: 35_000,
+    damageRange: [75, 150],
+  },
+] as const
+
 export default function Blades({ className }: { className?: string }) {
   return (
     <svg

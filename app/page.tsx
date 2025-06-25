@@ -5,6 +5,7 @@ import { MiniKit } from "@worldcoin/minikit-js"
 import Image from "next/image"
 
 import {
+  useBladeLevels,
   useTapMultiplier,
   useTapsEarned,
   useTotalKilledMonsters,
@@ -53,8 +54,6 @@ const atomMonster = atomWithStorage("fs.current.monster", {
   type: "pineapple" as MonsterTypes,
 })
 
-const BLADE_IMPACT_RANGE = [35, 80] // min, max impact damage
-
 let monsterMutexTimer: NodeJS.Timeout | undefined = undefined
 export default function Home() {
   const [isGameStarted, setIsGameStarted] = useState(false)
@@ -66,8 +65,9 @@ export default function Home() {
   const { incrementMonsterKill } = useTotalKilledMonsters()
   const [tapsForEnemy, setTapsForEnemy] = useAtom(atomTapsGivenForEnemy)
 
+  const { damageRange } = useBladeLevels()
   const [isDrilling, setIsDrilling] = useState({
-    impact: 40,
+    impact: 1,
     active: false,
   })
 
@@ -195,7 +195,7 @@ export default function Home() {
 
     playSound("cry")
 
-    const [BLADE_MIN, BLADE_MAX] = BLADE_IMPACT_RANGE
+    const [BLADE_MIN, BLADE_MAX] = damageRange
     const IMPACT =
       // Impact is a random value between BLADE_MIN and BLADE_MAX
       BLADE_MIN + Math.round(Math.random() * (BLADE_MAX - BLADE_MIN))

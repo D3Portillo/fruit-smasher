@@ -4,6 +4,7 @@ import type { MonsterTypes } from "@/lib/game"
 import { useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import { MAX_MULTIPLIER } from "@/components/ModalBoost"
+import { BLADE_LEVELS } from "@/components/sprites/Blades"
 
 export const atomTapsEarned = atomWithStorage("fs.tapsEarned", 0)
 export const useTapsEarned = () => useAtom(atomTapsEarned)
@@ -44,5 +45,33 @@ export const useTotalKilledMonsters = () => {
   return {
     killedMonsters,
     incrementMonsterKill,
+  }
+}
+
+export const atomBladeLevel = atomWithStorage(
+  "fs.bladeLevels",
+  0
+  // Level from "LEVELS" array in components/sprites/Blades.tsx
+)
+
+const MAX_UPGRADE_INDEX = BLADE_LEVELS.length - 1
+export const useBladeLevels = () => {
+  const [bladeLevel, setBladeLevel] = useAtom(atomBladeLevel)
+
+  const NEXT_LEVEL_INDEX = Math.min(bladeLevel + 1, MAX_UPGRADE_INDEX)
+  const incrementBladeLevel = () => setBladeLevel(NEXT_LEVEL_INDEX)
+
+  const { damageRange } = BLADE_LEVELS[bladeLevel]
+  const nextLevelData = {
+    ...BLADE_LEVELS[NEXT_LEVEL_INDEX],
+    index: NEXT_LEVEL_INDEX,
+  }
+
+  return {
+    damageRange,
+    nextLevelData,
+    isMaxedOut: bladeLevel >= MAX_UPGRADE_INDEX,
+    currentLevelIndex: bladeLevel,
+    incrementBladeLevel,
   }
 }

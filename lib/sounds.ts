@@ -7,6 +7,7 @@ const ASSETS = {
   pop2: "/sound/pop2.mp3",
   pop3: "/sound/pop3.mp3",
   drill: "/sound/drill.mp3",
+  setup: "/sound/setup.mp3",
   hitlong: "/sound/hitlong.mp3",
   cry: "/sound/cry.mp3",
   error: "/sound/error.mp3",
