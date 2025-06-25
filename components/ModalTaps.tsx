@@ -233,8 +233,8 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
               <Fragment>
                 <AlertDialogDescription className="mb-4">
                   <p>
-                    Increase the Blade poweer to deal more damage to fruits per
-                    use.
+                    Increase the Blade's TAPS power and deal more damage to
+                    fruits in each use.
                   </p>
 
                   <div className="flex gap-4 p-3 border-3 border-black rounded-2xl mt-4 items-center justify-evenly">
