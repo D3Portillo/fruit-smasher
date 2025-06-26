@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import useSWR from "swr"
 
 import {
@@ -45,9 +45,9 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const { withTapSound } = useTapPopSound()
 
   const { data: balance = 0 } = useSWR(
-    address ? `balance.taps.${address}` : null,
+    address ? `balance.taps.${address}.${isOpen}` : null,
     async () => {
-      if (!address) return 0
+      if (!address || !isOpen) return 0
       const balance = await worldClient.readContract({
         address: ADDRESS_TAPS,
         functionName: "balanceOf",
@@ -169,6 +169,13 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
     }
   }
 
+  useEffect(() => {
+    if (isOpen) {
+      // Reset section to "claim" when modal opens
+      setSection("claim")
+    }
+  }, [isOpen])
+
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger onClick={withTapSound()} asChild>
@@ -201,11 +208,11 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
             <TabsContent asChild value="claim">
               <Fragment>
-                <AlertDialogDescription className="mb-4 min-h-[30vh]">
+                <AlertDialogDescription className="mb-4 min-h-[28vh]">
                   <p>
-                    <strong>TAPS</strong> total supply represent the number of
-                    times a human-being has clicked/tap the screen to smash a
-                    fruit monster in the Mini App.
+                    <strong className="font-medium">TAPS</strong> total supply
+                    represent the number of times a human-being has clicked/tap
+                    the screen to smash a fruit monster in the Mini App.
                   </p>
 
                   {claimedTAPS > 0 && (
@@ -231,7 +238,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
             <TabsContent asChild value="upgrade">
               <Fragment>
-                <AlertDialogDescription className="mb-4 min-h-[30vh]">
+                <AlertDialogDescription className="mb-4 min-h-[28vh]">
                   <p>
                     Increase the Blade's TAPS power and deal more damage to
                     fruits in each use.
