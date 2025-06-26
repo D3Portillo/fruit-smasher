@@ -182,16 +182,16 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
             </AlertDialogHeader>
 
             <nav className="-mx-8 -mt-2 mb-4 px-8">
-              <TabsList className="border-b grid grid-cols-2 border-b-black/3">
+              <TabsList className="grid grid-cols-2 border-b border-b-black/7">
                 <TabsTrigger
-                  className="border-b-2 px-6 py-3 border-transparent data-[state=active]:border-black font-semibold"
+                  className="border-b-3 px-6 py-3 border-transparent data-[state=active]:border-black font-semibold"
                   value="claim"
                 >
                   Claim
                 </TabsTrigger>
 
                 <TabsTrigger
-                  className="border-b-2 px-6 py-3 border-transparent data-[state=active]:border-black font-semibold"
+                  className="border-b-3 px-6 py-3 border-transparent data-[state=active]:border-black font-semibold"
                   value="upgrade"
                 >
                   Upgrades
@@ -201,11 +201,11 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
             <TabsContent asChild value="claim">
               <Fragment>
-                <AlertDialogDescription className="mb-4">
+                <AlertDialogDescription className="mb-4 min-h-[30vh]">
                   <p>
-                    <strong>TAPS</strong> total supply represents the number of
-                    times a human-person has clicked in the screen to smash a
-                    fruit monster in Worldchain.
+                    <strong>TAPS</strong> total supply represent the number of
+                    times a human-being has clicked/tap the screen to smash a
+                    fruit monster in the Mini App.
                   </p>
 
                   {claimedTAPS > 0 && (
@@ -231,13 +231,13 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
             <TabsContent asChild value="upgrade">
               <Fragment>
-                <AlertDialogDescription className="mb-4">
+                <AlertDialogDescription className="mb-4 min-h-[30vh]">
                   <p>
                     Increase the Blade's TAPS power and deal more damage to
                     fruits in each use.
                   </p>
 
-                  <div className="flex gap-4 p-3 border-3 border-black rounded-2xl mt-4 items-center justify-evenly">
+                  <div className="flex gap-5 py-3 px-5 border-3 border-black rounded-2xl mt-4 items-center justify-evenly">
                     <Blades className="size-20 animate-[spin_6s_linear_infinite] text-black" />
                     <div className="whitespace-nowrap">
                       <p className="text-lg text-black font-semibold">
@@ -290,9 +290,14 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                 </AlertDialogFooter>
               </Fragment>
             </TabsContent>
+            <p className="text-xs -mb-3 text-center text-black/60 mt-4">
+              Token balance: {balance.toLocaleString("en-US")} TAPS
+            </p>
           </Fragment>
         </Tabs>
       </AlertDialogContent>
     </AlertDialog>
   )
 }
+
+// TODO: Upgrade wait time - 1s - 2s - 3s less with WLD Token (1.5 - 3WLD curve)
