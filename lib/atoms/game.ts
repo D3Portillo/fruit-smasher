@@ -54,8 +54,13 @@ export const atomBladeLevel = atomWithStorage(
   // Level from "LEVELS" array in components/sprites/Blades.tsx
 )
 
+export const MAX_WAIT_TIME = 13
+export const MIN_WAIT_TIME = 10
+const atomBladeTimeToWait = atomWithStorage("fs.timeToWaits", MAX_WAIT_TIME)
+
 const MAX_UPGRADE_INDEX = BLADE_LEVELS.length - 1
 export const useBladeLevels = () => {
+  const [waitTime, setWaitTime] = useAtom(atomBladeTimeToWait)
   const [bladeLevel, setBladeLevel] = useAtom(atomBladeLevel)
 
   const NEXT_LEVEL_INDEX = Math.min(bladeLevel + 1, MAX_UPGRADE_INDEX)
@@ -69,6 +74,13 @@ export const useBladeLevels = () => {
 
   return {
     damageRange,
+    waitTime,
+    setWaitTime: (timeInSeconds: number) => {
+      // Clamp to MIN-MAX
+      setWaitTime(
+        Math.max(MIN_WAIT_TIME, Math.min(MAX_WAIT_TIME, timeInSeconds))
+      )
+    },
     nextLevelData,
     isMaxedOut: bladeLevel >= MAX_UPGRADE_INDEX,
     currentLevelIndex: bladeLevel,

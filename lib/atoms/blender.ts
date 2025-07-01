@@ -6,12 +6,22 @@ import { atom, useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import { useTapsEarned } from "./game"
 
-const MAX_TAPS = 1_200 // 1200 TAPS
+export const MAX_TAPS_CAPACITY = 2_800
+export const INIITAL_TAPS_CAPACITY = 1_200 // 1,200 TAPS
 const TAPS_PER_SEC = 0.7 // Almost 1 TAP per second
+
+const LEVELS = [
+  { level: 1, capacity: INIITAL_TAPS_CAPACITY, costInWLD: 0 },
+  { level: 2, capacity: 1500, costInWLD: 1 },
+  { level: 3, capacity: 2000, costInWLD: 1.5 },
+  { level: 4, capacity: 2500, costInWLD: 2 },
+  { level: 5, capacity: MAX_TAPS_CAPACITY, costInWLD: 2.5 },
+]
 
 const atomBlender = atomWithStorage("fs.blender", {
   isSetup: false,
   idleTimestamp: 0,
+  capacity: INIITAL_TAPS_CAPACITY, // Max TAPS that can be earned
 })
 
 const atomIsCollected = atom(false)
@@ -20,16 +30,17 @@ export const useBlender = () => {
   const { toast } = useToast()
   // This can claim while "in-game" but only once per session
   const [isCollected, setIsCollected] = useAtom(atomIsCollected)
-  const [{ idleTimestamp, isSetup }, setBlender] = useAtom(atomBlender)
+  const [{ idleTimestamp, isSetup, capacity }, setBlender] =
+    useAtom(atomBlender)
 
   const earnedTillOpen = useMemo(() => {
     return idleTimestamp > 0
       ? Math.min(
-          MAX_TAPS,
+          capacity,
           Math.floor(((Date.now() - idleTimestamp) / 1000) * TAPS_PER_SEC)
         )
       : 0
-  }, [idleTimestamp])
+  }, [idleTimestamp, capacity])
 
   const availableTaps =
     // If the blender is setup, and not collected - user can collect balance
@@ -53,16 +64,40 @@ export const useBlender = () => {
     return () => clearTimeout(timer)
   }, [isCollected, isSetup, idleTimestamp])
 
+  const currentLevelIndex =
+    LEVELS.findIndex((level) => level.capacity >= capacity) ||
+    // Fallback to the first level if no level matches
+    0
+
+  const currentLevel = currentLevelIndex + 1
   return {
+    currentLevelIndex,
+    currentLevel,
+    nextLevel:
+      // Index based on current level
+      // Fallback to the last level if current level is the last one
+      LEVELS[currentLevel] || LEVELS[currentLevelIndex],
     isCollected,
     availableTaps,
     isSetup,
+    capacity,
+    setTapsCapacity: (capacity: number) => {
+      setBlender((prev) => ({
+        ...prev,
+        capacity:
+          // Clamp capacity to range [INIITAL_TAPS_CAPACITY, MAX_TAPS_CAPACITY]
+          Math.min(
+            MAX_TAPS_CAPACITY,
+            Math.max(INIITAL_TAPS_CAPACITY, capacity)
+          ),
+      }))
+    },
     setupBlender: () => {
-      setBlender({
-        // idleTimestamp is set in the main page's useEffect
+      setBlender((prev) => ({
+        ...prev,
         isSetup: true,
         idleTimestamp: Date.now(),
-      })
+      }))
 
       toast.success({
         title: "Blender ready!",

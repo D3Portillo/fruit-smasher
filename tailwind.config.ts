@@ -46,6 +46,7 @@ const config: Config = {
           },
           purple: {
             DEFAULT: "#C52EF6",
+            pink: "#E63CCB",
           },
         },
         background: "hsl(var(--background))",

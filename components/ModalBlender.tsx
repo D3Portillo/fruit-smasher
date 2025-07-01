@@ -26,7 +26,8 @@ export default function ModalBlender({
   const [isOpen, setIsOpen] = useState(false)
 
   const { withTapSound } = useTapPopSound()
-  const { setupBlender, isSetup, collect, availableTaps } = useBlender()
+  const { setupBlender, isSetup, collect, availableTaps, capacity } =
+    useBlender()
   const { address, signIn } = useWorldAuth()
 
   async function handleSetupBlender() {
@@ -79,6 +80,9 @@ export default function ModalBlender({
               : "Connet Wallet"}
           </MainButton>
         </AlertDialogFooter>
+        <p className="text-xs -mb-3 text-center text-black/60 mt-4">
+          Capacity: {capacity.toLocaleString("en-US")} TAPS
+        </p>
       </AlertDialogContent>
     </AlertDialog>
   )

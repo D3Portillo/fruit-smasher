@@ -45,8 +45,6 @@ import Blades from "@/components/sprites/Blades"
 
 import { tapPowerCurve } from "@/components/ModalBoost/internals"
 
-const TIME_TO_DRILL = 13 // seconds
-
 const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 const atomMonster = atomWithStorage("fs.current.monster", {
   hp: 250,
@@ -65,7 +63,7 @@ export default function Home() {
   const { incrementMonsterKill } = useTotalKilledMonsters()
   const [tapsForEnemy, setTapsForEnemy] = useAtom(atomTapsGivenForEnemy)
 
-  const { damageRange } = useBladeLevels()
+  const { damageRange, waitTime } = useBladeLevels()
   const [isDrilling, setIsDrilling] = useState({
     impact: 1,
     active: false,
@@ -96,11 +94,8 @@ export default function Home() {
 
   const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
 
-  const {
-    elapsedTime,
-    isComplete: isDrillReady,
-    restart,
-  } = useTimer(TIME_TO_DRILL)
+  // Based on time to wait for the drill to be ready
+  const { elapsedTime, isComplete: isDrillReady, restart } = useTimer(waitTime)
 
   const ENEMY_HP = Math.max(0, monster.hp - tapsForEnemy)
   const DEFEATED_RATIO = (ENEMY_HP / monster.hp) * 100
@@ -440,7 +435,7 @@ export default function Home() {
                   "text-xs text-center mt-0.5 pb-2"
                 )}
               >
-                {isDrillReady ? "READY" : `${TIME_TO_DRILL - elapsedTime}s`}
+                {isDrillReady ? "READY" : `${waitTime - elapsedTime}s`}
               </div>
             </section>
 

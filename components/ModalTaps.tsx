@@ -1,11 +1,10 @@
 "use client"
 
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, PropsWithChildren, useEffect, useState } from "react"
 import useSWR from "swr"
 
 import {
   AlertDialog,
-  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -20,7 +19,12 @@ import { erc20Abi, formatEther, parseEther } from "viem"
 import { getDispenserPayload } from "@/actions/dispenser"
 
 import { useWorldAuth } from "@radish-la/world-auth"
-import { useBladeLevels, useTapsEarned } from "@/lib/atoms/game"
+import {
+  MAX_WAIT_TIME,
+  MIN_WAIT_TIME,
+  useBladeLevels,
+  useTapsEarned,
+} from "@/lib/atoms/game"
 import { useAudioMachine, useTapPopSound } from "@/lib/sounds"
 import { numberToShortWords } from "@/lib/numbers"
 import { worldClient } from "@/lib/world"
@@ -28,13 +32,21 @@ import { worldClient } from "@/lib/world"
 import { ADDRESS_DISPENSER, ADDRESS_TAPS } from "@/lib/constants"
 import { ABI_DISPENSER } from "@/lib/abis"
 
-import MainButton from "./MainButton"
-import ChildrenWrapper from "./ChildrenWrapper"
-import Blades from "./sprites/Blades"
-import { MINI_APP_RECIPIENT } from "@/actions/payments"
+import { GiFruitBowl } from "react-icons/gi"
+import { BiSolidTime } from "react-icons/bi"
+import { RiArrowLeftWideFill } from "react-icons/ri"
 
+import { executeWorldPayment, MINI_APP_RECIPIENT } from "@/actions/payments"
+import { MAX_TAPS_CAPACITY, useBlender } from "@/lib/atoms/blender"
+
+import MainButton from "./MainButton"
+import Blades from "./sprites/Blades"
+
+const BLADE_TIME_REDUCE_PAYMENT = 1.3 // 1 WLD
 export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const [section, setSection] = useState("claim")
+  const [upgradeItemIndex, setUpgradeItemIndex] = useState(0)
+
   const [isOpen, setIsOpen] = useState(false)
   const [localStoredTaps] = useTapsEarned()
 
@@ -43,6 +55,13 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
   const { playSound } = useAudioMachine(["setup"])
   const { withTapSound } = useTapPopSound()
+
+  const {
+    setTapsCapacity,
+    capacity,
+    nextLevel: nextBlenderLevel,
+    currentLevel: currentBlenderLevel,
+  } = useBlender()
 
   const { data: balance = 0 } = useSWR(
     address ? `balance.taps.${address}.${isOpen}` : null,
@@ -62,9 +81,11 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   const {
     incrementBladeLevel,
     isMaxedOut: isMaxedBlades,
-    nextLevelData,
-    currentLevelIndex,
+    nextLevelData: nextBladeLevelData,
+    currentLevelIndex: bladeLevelIndex,
     damageRange,
+    setWaitTime,
+    waitTime,
   } = useBladeLevels()
 
   const {
@@ -95,11 +116,15 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
     ? // Won't claim until syncing is done
       Math.max(0, localStoredTaps - claimedTAPS)
     : 0
-  const isClaiming = section === "claim" && claimableTAPS > 0
-  const ActionContainer = isClaiming ? ChildrenWrapper : AlertDialogClose
+
+  const isClaiming = claimableTAPS > 0
+
+  const closeModal = () => setIsOpen(false)
 
   async function handleClaim() {
     if (!address) return signIn()
+    // Close modal when nothing to claim
+    if (!isClaiming) return closeModal()
 
     const { amount, deadline, signature } = await getDispenserPayload(address, {
       requestingAmount: claimableTAPS,
@@ -121,7 +146,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
         title: `Claimed ${numberToShortWords(claimableTAPS)} TAPS`,
       })
       // Close modal after successful claim
-      return setIsOpen(false)
+      return closeModal()
     }
 
     // Do not show error state if user denied the transaction
@@ -134,40 +159,271 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
     }
   }
 
-  async function handleUpgrade() {
-    if (!address) return signIn()
+  const UPGRADES = [
+    {
+      type: "blade-damage",
+      isMaxed: isMaxedBlades,
+      render() {
+        return (
+          <UpgradeItem
+            key={`upgrade-item-${this.type}`}
+            explainer={
+              <Fragment>
+                {" "}
+                Increase the blade's{" "}
+                <strong className="font-medium underline underline-offset-4">
+                  TAPS power
+                </strong>{" "}
+                and deal more damage to fruits in each use.
+              </Fragment>
+            }
+            iconImage={
+              <Blades className="size-20 shrink-0 animate-[spin_6s_linear_infinite] text-black" />
+            }
+            title={
+              <Fragment>
+                🔩 Blades (
+                {this.isMaxed ? (
+                  <span className="text-fs-purple-pink">MAX</span>
+                ) : (
+                  `LVL ${bladeLevelIndex + 1}`
+                )}
+                )
+              </Fragment>
+            }
+          >
+            <p className="mt-1.5 text-sm text-black/60">
+              <strong className="font-medium w-20 inline-block">
+                {this.isMaxed ? "Damage" : "Current"}
+              </strong>{" "}
+              {damageRange[0]} - {damageRange[1]} TAPS
+            </p>
 
-    if (balance < nextLevelData.costInTAPS) {
-      return toast.error({
-        title: "Insufficient TAPS Balance",
-      })
-    }
+            {this.isMaxed ? null : (
+              <Fragment>
+                <p className="mt-0.5 text-sm text-black/60">
+                  <strong className="font-medium w-20 inline-block">
+                    Next 🔰
+                  </strong>{" "}
+                  {nextBladeLevelData.damageRange[0]} -{" "}
+                  {nextBladeLevelData.damageRange[1]} TAPS
+                </p>
 
-    const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
-      transaction: [
-        {
-          abi: erc20Abi,
-          address: ADDRESS_TAPS,
-          functionName: "transfer",
-          args: [
-            MINI_APP_RECIPIENT,
-            parseEther(nextLevelData.costInTAPS.toString()),
+                <hr className="my-2 border border-black" />
+                <p className="text-sm font-medium text-black">
+                  <strong className="w-20 inline-block">COST</strong>{" "}
+                  {nextBladeLevelData.costInTAPS.toLocaleString("en-US")} TAPS
+                </p>
+              </Fragment>
+            )}
+          </UpgradeItem>
+        )
+      },
+      async tryUpgrade() {
+        if (!address) return signIn()
+
+        if (balance < nextBladeLevelData.costInTAPS) {
+          return toast.error({
+            title: "Insufficient TAPS Balance",
+          })
+        }
+
+        const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+          transaction: [
+            {
+              abi: erc20Abi,
+              address: ADDRESS_TAPS,
+              functionName: "transfer",
+              args: [
+                MINI_APP_RECIPIENT,
+                parseEther(nextBladeLevelData.costInTAPS.toString()),
+              ],
+            },
           ],
-        },
-      ],
-    })
+        })
 
-    if (finalPayload.status === "success") {
-      incrementBladeLevel()
-      playSound("setup")
-      toast.success({
-        title: `Blades upgraded to LVL ${nextLevelData.index + 1}`,
-      })
+        if (finalPayload.status === "success") {
+          incrementBladeLevel()
+          playSound("setup")
+          toast.success({
+            title: `Blades upgraded to LVL ${nextBladeLevelData.index + 1}`,
+          })
+        }
+      },
+    },
+    {
+      type: "blade-time",
+      isMaxed: waitTime <= MIN_WAIT_TIME,
+      render() {
+        const { level, nextWaitTime, price } = this.data
+        return (
+          <UpgradeItem
+            key={`upgrade-item-${this.type}`}
+            title={
+              <Fragment>
+                ⏰ Blades (
+                {waitTime <= MIN_WAIT_TIME ? (
+                  <span className="text-fs-purple-pink">MAX</span>
+                ) : (
+                  `LVL ${level}`
+                )}
+                )
+              </Fragment>
+            }
+            iconImage={
+              <figure className="relative shrink-0">
+                <Blades className="size-20 scale-90 shrink-0 text-black" />
+                <div className="absolute scale-110 bg-gradient-to-br from-fs-green/20 to-fs-green/10 border-3 border-black rounded-full inset-0 grid place-items-center">
+                  <BiSolidTime className="text-black" />
+                </div>
+              </figure>
+            }
+            explainer={
+              <Fragment>
+                Reduce the{" "}
+                <strong className="font-medium underline underline-offset-4">
+                  time to wait
+                </strong>{" "}
+                for the blades to be ready for use.
+              </Fragment>
+            }
+          >
+            <p className="mt-1.5 text-sm text-black/60">
+              <strong className="font-medium whitespace-nowrap w-20 inline-block">
+                Wait Time
+              </strong>{" "}
+              {waitTime}s
+            </p>
 
-      // Close modal after successful upgrade
-      setIsOpen(false)
-    }
-  }
+            {this.isMaxed ? null : (
+              <Fragment>
+                <p className="mt-0.5 text-sm text-black/60">
+                  <strong className="font-medium w-20 inline-block">
+                    Next 🔰
+                  </strong>{" "}
+                  {nextWaitTime}s
+                </p>
+
+                <hr className="my-2 border border-black" />
+
+                <p className="text-sm font-medium text-black">
+                  <strong className="w-20 inline-block">COST</strong>
+                  {price} WLD
+                </p>
+              </Fragment>
+            )}
+          </UpgradeItem>
+        )
+      },
+      get data() {
+        const level = 1 + (MAX_WAIT_TIME - waitTime)
+        return {
+          level,
+          nextWaitTime: Math.max(MIN_WAIT_TIME, waitTime - 1),
+          price: Number(Number(level * BLADE_TIME_REDUCE_PAYMENT).toFixed(2)),
+        }
+      },
+      async tryUpgrade() {
+        if (!address) return signIn()
+
+        const { nextWaitTime, price } = this.data
+        const TITLE = `Blades wait time reduced to ${nextWaitTime}s`
+        const result = await executeWorldPayment({
+          amount: price,
+          initiatorAddress: address,
+          paymentDescription: TITLE,
+          token: "WLD",
+        })
+
+        if (result?.status === "success") {
+          setWaitTime(nextWaitTime)
+          toast.success({
+            title: TITLE,
+          })
+        }
+      },
+    },
+    {
+      type: "blender-amount",
+      isMaxed: capacity >= MAX_TAPS_CAPACITY,
+      render() {
+        return (
+          <UpgradeItem
+            key={`upgrade-item-${this.type}`}
+            explainer={
+              <Fragment>
+                Increase blender's TAPS capacity and{" "}
+                <strong className="font-medium underline underline-offset-4">
+                  collect more
+                </strong>{" "}
+                tokens when idle.
+              </Fragment>
+            }
+            title={
+              <Fragment>
+                🍱 Blender (
+                {this.isMaxed ? (
+                  <span className="text-fs-purple-pink">MAX</span>
+                ) : (
+                  `LVL ${currentBlenderLevel}`
+                )}
+                )
+              </Fragment>
+            }
+            iconImage={
+              <figure className="size-20 shrink-0 scale-110 border-2 border-black/7 bg-fs-green rounded-full grid place-items-center">
+                <GiFruitBowl className="text-5xl scale-105 text-black" />
+              </figure>
+            }
+          >
+            <p className="mt-1.5 text-sm text-black/60">
+              <strong className="font-medium w-20 inline-block">
+                Capacity
+              </strong>{" "}
+              {capacity.toLocaleString("en-US")} TAPS
+            </p>
+
+            {this.isMaxed ? null : (
+              <Fragment>
+                <p className="mt-0.5 text-sm text-black/60">
+                  <strong className="font-medium w-20 inline-block">
+                    Next 🔰
+                  </strong>{" "}
+                  {nextBlenderLevel.capacity.toLocaleString("en-US")} TAPS
+                </p>
+
+                <hr className="my-2 border border-black" />
+
+                <p className="text-sm font-medium text-black">
+                  <strong className="w-20 inline-block">COST</strong>{" "}
+                  {nextBlenderLevel.costInWLD.toLocaleString("en-US")} WLD
+                </p>
+              </Fragment>
+            )}
+          </UpgradeItem>
+        )
+      },
+      async tryUpgrade() {
+        if (!address) return signIn()
+        const TITLE = `Blender upgraded to LVL ${currentBlenderLevel + 1}`
+        const result = await executeWorldPayment({
+          amount: nextBlenderLevel.costInWLD,
+          initiatorAddress: address,
+          paymentDescription: TITLE,
+          token: "WLD",
+        })
+
+        if (result?.status === "success") {
+          setTapsCapacity(nextBlenderLevel.capacity)
+          toast.success({
+            title: TITLE,
+          })
+        }
+      },
+    },
+  ]
+
+  const UPGRADE = UPGRADES[upgradeItemIndex]
 
   useEffect(() => {
     if (isOpen) {
@@ -175,6 +431,27 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
       setSection("claim")
     }
   }, [isOpen])
+
+  useEffect(() => {
+    // Reset upgrade item index when section changes
+    setUpgradeItemIndex(0)
+  }, [section])
+
+  function handleNextUpgradeItem() {
+    const isOffSet = upgradeItemIndex === UPGRADES.length - 1
+    setUpgradeItemIndex(
+      // Circular navigation
+      isOffSet ? 0 : upgradeItemIndex + 1
+    )
+  }
+
+  function handlePreviousUpgradeItem() {
+    const isOffSet = upgradeItemIndex === 0
+    setUpgradeItemIndex(
+      // Circular navigation
+      isOffSet ? UPGRADES.length - 1 : upgradeItemIndex - 1
+    )
+  }
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
@@ -191,6 +468,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
             <nav className="-mx-8 -mt-2 mb-4 px-8">
               <TabsList className="grid grid-cols-2 border-b border-b-black/7">
                 <TabsTrigger
+                  onClick={withTapSound()}
                   className="border-b-3 px-6 py-3 border-transparent data-[state=active]:border-black font-semibold"
                   value="claim"
                 >
@@ -198,6 +476,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                 </TabsTrigger>
 
                 <TabsTrigger
+                  onClick={withTapSound()}
                   className="border-b-3 px-6 py-3 border-transparent data-[state=active]:border-black font-semibold"
                   value="upgrade"
                 >
@@ -225,64 +504,37 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                 <div className="py-2" />
 
                 <AlertDialogFooter>
-                  <ActionContainer asChild>
-                    <MainButton onClick={isClaiming ? handleClaim : undefined}>
-                      {isClaiming
-                        ? `Claim ${numberToShortWords(claimableTAPS)} TAPS`
-                        : "Got it"}
-                    </MainButton>
-                  </ActionContainer>
+                  <MainButton onClick={handleClaim}>
+                    {isClaiming
+                      ? `Claim ${numberToShortWords(claimableTAPS)} TAPS`
+                      : "Got it"}
+                  </MainButton>
                 </AlertDialogFooter>
               </Fragment>
             </TabsContent>
 
             <TabsContent asChild value="upgrade">
-              <Fragment>
-                <AlertDialogDescription className="mb-4 min-h-[28vh]">
-                  <p>
-                    Increase the Blade's TAPS power and deal more damage to
-                    fruits in each use.
-                  </p>
+              <section className="relative w-full">
+                <AlertDialogDescription
+                  asChild
+                  className="mb-4 -mx-9 min-h-[28vh]"
+                >
+                  <div className="flex">
+                    <button
+                      onClick={withTapSound(handlePreviousUpgradeItem)}
+                      className="shrink-0 w-10 pl-1 pt-16 rounded-2xl flex items-start justify-center"
+                    >
+                      <RiArrowLeftWideFill className="text-black scale-150" />
+                    </button>
 
-                  <div className="flex gap-5 py-3 px-5 border-3 border-black rounded-2xl mt-4 items-center justify-evenly">
-                    <Blades className="size-20 animate-[spin_6s_linear_infinite] text-black" />
-                    <div className="whitespace-nowrap">
-                      <p className="text-lg text-black font-semibold">
-                        Blades{" "}
-                        {isMaxedBlades
-                          ? `(MAX)`
-                          : `(LVL ${currentLevelIndex + 1})`}
-                      </p>
+                    {UPGRADE.render()}
 
-                      <p className="mt-1.5 text-sm text-black/60">
-                        <strong className="font-medium w-16 inline-block">
-                          {isMaxedBlades ? "Damage" : "Current"}
-                        </strong>{" "}
-                        {damageRange[0]} - {damageRange[1]} TAPS
-                      </p>
-
-                      {isMaxedBlades ? null : (
-                        <Fragment>
-                          <p className="mt-0.5 text-sm text-black/60">
-                            <strong className="font-medium w-16 inline-block">
-                              Next 🔰
-                            </strong>{" "}
-                            {nextLevelData.damageRange[0]} -{" "}
-                            {nextLevelData.damageRange[1]} TAPS
-                          </p>
-
-                          <hr className="my-2" />
-
-                          <p className="text-sm text-black/60">
-                            <strong className="font-medium w-16 inline-block">
-                              Cost
-                            </strong>{" "}
-                            {nextLevelData.costInTAPS.toLocaleString("en-US")}{" "}
-                            TAPS
-                          </p>
-                        </Fragment>
-                      )}
-                    </div>
+                    <button
+                      onClick={withTapSound(handleNextUpgradeItem)}
+                      className="shrink-0 w-10 pr-1 pt-16 rounded-2xl flex items-start justify-center"
+                    >
+                      <RiArrowLeftWideFill className="rotate-180 text-black scale-150" />
+                    </button>
                   </div>
                 </AlertDialogDescription>
 
@@ -290,12 +542,20 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
 
                 <AlertDialogFooter>
                   <MainButton
-                    onClick={isMaxedBlades ? undefined : handleUpgrade}
+                    onClick={
+                      UPGRADE.isMaxed
+                        ? closeModal
+                        : UPGRADE.tryUpgrade.bind(UPGRADE)
+                    }
                   >
-                    {isMaxedBlades ? "Continue playing" : "Upgrade Blades"}
+                    {UPGRADE.isMaxed
+                      ? "Continue playing"
+                      : UPGRADE.type.includes("blade")
+                      ? "Upgrade Blades"
+                      : "Upgrade Blender"}
                   </MainButton>
                 </AlertDialogFooter>
-              </Fragment>
+              </section>
             </TabsContent>
             <p className="text-xs -mb-3 text-center text-black/60 mt-4">
               Token balance: {balance.toLocaleString("en-US")} TAPS
@@ -307,4 +567,33 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
   )
 }
 
-// TODO: Upgrade wait time - 1s - 2s - 3s less with WLD Token (1.5 - 3WLD curve)
+function UpgradeItem({
+  explainer,
+  title,
+  children,
+  iconImage,
+}: PropsWithChildren<{
+  title: JSX.Element | string
+  explainer: JSX.Element | string
+  iconImage: JSX.Element
+}>) {
+  return (
+    <div className="flex-grow">
+      <div className="flex min-h-[9rem] gap-8 py-3 px-5 border-3 border-black rounded-2xl items-center">
+        <div className="shrink-0">{iconImage}</div>
+
+        <div className="w-full">
+          <h2 className="text-lg whitespace-nowrap text-black font-semibold">
+            {title}
+          </h2>
+
+          {children}
+        </div>
+      </div>
+
+      <p className="mt-3 max-w-[16rem] mx-auto text-xs text-center">
+        {explainer}
+      </p>
+    </div>
+  )
+}
