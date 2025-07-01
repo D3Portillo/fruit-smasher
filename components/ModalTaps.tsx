@@ -371,7 +371,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
               </Fragment>
             }
             iconImage={
-              <figure className="size-20 shrink-0 scale-110 border-2 border-black/7 bg-fs-green rounded-full grid place-items-center">
+              <figure className="size-20 shrink-0 scale-110 border-3 border-black bg-fs-green rounded-full grid place-items-center">
                 <GiFruitBowl className="text-5xl scale-105 text-black" />
               </figure>
             }
