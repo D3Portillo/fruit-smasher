@@ -193,25 +193,20 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
             }
           >
             <p className="mt-1.5 text-sm text-black/60">
-              <strong className="font-medium w-20 inline-block">
-                {this.isMaxed ? "Damage" : "Current"}
-              </strong>{" "}
+              <strong>{this.isMaxed ? "Damage" : "Current"}</strong>{" "}
               {damageRange[0]} - {damageRange[1]} TAPS
             </p>
 
             {this.isMaxed ? null : (
               <Fragment>
                 <p className="mt-0.5 text-sm text-black/60">
-                  <strong className="font-medium w-20 inline-block">
-                    Next 🔰
-                  </strong>{" "}
-                  {nextBladeLevelData.damageRange[0]} -{" "}
+                  <strong>Next 🔰</strong> {nextBladeLevelData.damageRange[0]} -{" "}
                   {nextBladeLevelData.damageRange[1]} TAPS
                 </p>
 
                 <hr className="my-2 border border-black" />
                 <p className="text-sm font-medium text-black">
-                  <strong className="w-20 inline-block">COST</strong>{" "}
+                  <strong>COST</strong>{" "}
                   {nextBladeLevelData.costInTAPS.toLocaleString("en-US")} TAPS
                 </p>
               </Fragment>
@@ -289,25 +284,19 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
             }
           >
             <p className="mt-1.5 text-sm text-black/60">
-              <strong className="font-medium whitespace-nowrap w-20 inline-block">
-                Wait Time
-              </strong>{" "}
-              {waitTime}s
+              <strong>Wait Time</strong> {waitTime}s
             </p>
 
             {this.isMaxed ? null : (
               <Fragment>
                 <p className="mt-0.5 text-sm text-black/60">
-                  <strong className="font-medium w-20 inline-block">
-                    Next 🔰
-                  </strong>{" "}
-                  {nextWaitTime}s
+                  <strong>Next 🔰</strong> {nextWaitTime}s
                 </p>
 
                 <hr className="my-2 border border-black" />
 
                 <p className="text-sm font-medium text-black">
-                  <strong className="w-20 inline-block">COST</strong>
+                  <strong>COST</strong>
                   {price} WLD
                 </p>
               </Fragment>
@@ -377,25 +366,20 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
             }
           >
             <p className="mt-1.5 text-sm text-black/60">
-              <strong className="font-medium w-20 inline-block">
-                Capacity
-              </strong>{" "}
-              {capacity.toLocaleString("en-US")} TAPS
+              <strong>Capacity</strong> {capacity.toLocaleString("en-US")} TAPS
             </p>
 
             {this.isMaxed ? null : (
               <Fragment>
                 <p className="mt-0.5 text-sm text-black/60">
-                  <strong className="font-medium w-20 inline-block">
-                    Next 🔰
-                  </strong>{" "}
+                  <strong>Next 🔰</strong>{" "}
                   {nextBlenderLevel.capacity.toLocaleString("en-US")} TAPS
                 </p>
 
                 <hr className="my-2 border border-black" />
 
                 <p className="text-sm font-medium text-black">
-                  <strong className="w-20 inline-block">COST</strong>{" "}
+                  <strong>COST</strong>{" "}
                   {nextBlenderLevel.costInWLD.toLocaleString("en-US")} WLD
                 </p>
               </Fragment>
@@ -519,7 +503,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                   asChild
                   className="mb-4 -mx-9 min-h-[28vh]"
                 >
-                  <div className="flex [&_p]:whitespace-nowrap">
+                  <div className="flex">
                     <button
                       onClick={withTapSound(handlePreviousUpgradeItem)}
                       className="shrink-0 w-10 pl-1 pt-16 rounded-2xl flex items-start justify-center"
@@ -582,7 +566,7 @@ function UpgradeItem({
       <div className="flex min-h-[9rem] bg-white gap-6 py-3 px-5 border-3 border-black rounded-2xl items-center">
         <div className="shrink-0">{iconImage}</div>
 
-        <div className="w-full">
+        <div className="w-full [&_strong]:font-semibold [&_p_>_strong]:w-18 [&_p_>_strong]:inline-block [&_p]:whitespace-nowrap">
           <h2 className="text-lg whitespace-nowrap text-black font-semibold">
             {title}
           </h2>
