@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, PropsWithChildren, useEffect, useState } from "react"
+import { Fragment, type PropsWithChildren, useEffect, useState } from "react"
 import useSWR from "swr"
 
 import {
@@ -255,7 +255,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
       type: "blade-time",
       isMaxed: waitTime <= MIN_WAIT_TIME,
       render() {
-        const { level, nextWaitTime, price } = this.data
+        const { level, nextWaitTime, price } = this.data()
         return (
           <UpgradeItem
             key={`upgrade-item-${this.type}`}
@@ -315,7 +315,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
           </UpgradeItem>
         )
       },
-      get data() {
+      data() {
         const level = 1 + (MAX_WAIT_TIME - waitTime)
         return {
           level,
@@ -326,7 +326,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
       async tryUpgrade() {
         if (!address) return signIn()
 
-        const { nextWaitTime, price } = this.data
+        const { nextWaitTime, price } = this.data()
         const TITLE = `Blades wait time reduced to ${nextWaitTime}s`
         const result = await executeWorldPayment({
           amount: price,
