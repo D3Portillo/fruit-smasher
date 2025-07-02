@@ -495,8 +495,8 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                   </p>
 
                   {claimedTAPS > 0 && (
-                    <p className="mt-3 font-semibold text-black">
-                      💎 Claimed: {numberToShortWords(claimedTAPS)} TAPS
+                    <p className="mt-5 font-semibold text-black">
+                      🔓 Claimed: {numberToShortWords(claimedTAPS)} TAPS
                     </p>
                   )}
                 </AlertDialogDescription>
@@ -519,7 +519,7 @@ export default function ModalTaps({ trigger }: { trigger?: React.ReactNode }) {
                   asChild
                   className="mb-4 -mx-9 min-h-[28vh]"
                 >
-                  <div className="flex">
+                  <div className="flex [&_p]:whitespace-nowrap">
                     <button
                       onClick={withTapSound(handlePreviousUpgradeItem)}
                       className="shrink-0 w-10 pl-1 pt-16 rounded-2xl flex items-start justify-center"
@@ -579,7 +579,7 @@ function UpgradeItem({
 }>) {
   return (
     <div className="flex-grow">
-      <div className="flex min-h-[9rem] gap-8 py-3 px-5 border-3 border-black rounded-2xl items-center">
+      <div className="flex min-h-[9rem] bg-white gap-6 py-3 px-5 border-3 border-black rounded-2xl items-center">
         <div className="shrink-0">{iconImage}</div>
 
         <div className="w-full">
