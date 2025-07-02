@@ -92,7 +92,8 @@ export default function Home() {
     setTapsEarned((acc) => Math.round(acc + amount))
   }
 
-  const safePaddingBottom = MiniKit.deviceProperties.safeAreaInsets?.bottom || 0
+  const safePaddingBottom =
+    MiniKit?.deviceProperties?.safeAreaInsets?.bottom || 0
 
   // Based on time to wait for the drill to be ready
   const { elapsedTime, isComplete: isDrillReady, restart } = useTimer(waitTime)
@@ -227,7 +228,9 @@ export default function Home() {
     <main
       className="flex max-w-xl mx-auto flex-col h-dvh overflow-hidden"
       style={{
-        paddingBottom: `${safePaddingBottom}px`,
+        paddingBottom: `${
+          isFinite(safePaddingBottom) ? safePaddingBottom : 0
+        }px`,
         backgroundColor: isAssetLoadComplete ? undefined : "white",
       }}
     >
@@ -252,18 +255,18 @@ export default function Home() {
         <Fragment>
           <div className="bg-white flex flex-col flex-grow">
             <nav className="flex h-24 px-5 pt-5 items-start justify-between">
-               <button className="text-left">
-                    <strong className="text-2xl">
-                      {tapsEarned <= 0
-                        ? "NO."
-                        : tapsEarned < 10
-                        ? `0${Math.floor(tapsEarned)}`
-                        : tapsEarned.toLocaleString("en-US", {
-                            maximumFractionDigits: 3,
-                          })}
-                    </strong>
-                    <p className="text-lg -mt-1.5 font-medium">TAPS</p>
-                  </button>
+              <button className="text-left">
+                <strong className="text-2xl">
+                  {tapsEarned <= 0
+                    ? "NO."
+                    : tapsEarned < 10
+                    ? `0${Math.floor(tapsEarned)}`
+                    : tapsEarned.toLocaleString("en-US", {
+                        maximumFractionDigits: 3,
+                      })}
+                </strong>
+                <p className="text-lg -mt-1.5 font-medium">TAPS</p>
+              </button>
 
               {isConnected ? (
                 <ModalProfile
