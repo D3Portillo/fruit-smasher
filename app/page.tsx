@@ -231,7 +231,7 @@ export default function Home() {
         backgroundColor: isAssetLoadComplete ? undefined : "white",
       }}
     >
-      <div className="hidden">
+      <div className="invisible pointer-events-none fixed -top-1 size-px">
         {Object.entries(MONSTER_ASSETS).map(([monsterType, image]) => {
           // Preload all monster images
           return (
@@ -252,9 +252,7 @@ export default function Home() {
         <Fragment>
           <div className="bg-white flex flex-col flex-grow">
             <nav className="flex h-24 px-5 pt-5 items-start justify-between">
-              <ModalTaps
-                trigger={
-                  <button className="text-left">
+               <button className="text-left">
                     <strong className="text-2xl">
                       {tapsEarned <= 0
                         ? "NO."
@@ -266,8 +264,6 @@ export default function Home() {
                     </strong>
                     <p className="text-lg -mt-1.5 font-medium">TAPS</p>
                   </button>
-                }
-              />
 
               {isConnected ? (
                 <ModalProfile
