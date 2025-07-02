@@ -255,18 +255,22 @@ export default function Home() {
         <Fragment>
           <div className="bg-white flex flex-col flex-grow">
             <nav className="flex h-24 px-5 pt-5 items-start justify-between">
-              <button className="text-left">
-                <strong className="text-2xl">
-                  {tapsEarned <= 0
-                    ? "NO."
-                    : tapsEarned < 10
-                    ? `0${Math.floor(tapsEarned)}`
-                    : tapsEarned.toLocaleString("en-US", {
-                        maximumFractionDigits: 3,
-                      })}
-                </strong>
-                <p className="text-lg -mt-1.5 font-medium">TAPS</p>
-              </button>
+              <ModalTaps
+                trigger={
+                  <button className="text-left">
+                    <strong className="text-2xl">
+                      {tapsEarned <= 0
+                        ? "NO."
+                        : tapsEarned < 10
+                        ? `0${Math.floor(tapsEarned)}`
+                        : tapsEarned.toLocaleString("en-US", {
+                            maximumFractionDigits: 3,
+                          })}
+                    </strong>
+                    <p className="text-lg -mt-1.5 font-medium">TAPS</p>
+                  </button>
+                }
+              />
 
               {isConnected ? (
                 <ModalProfile

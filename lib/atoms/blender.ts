@@ -30,8 +30,14 @@ export const useBlender = () => {
   const { toast } = useToast()
   // This can claim while "in-game" but only once per session
   const [isCollected, setIsCollected] = useAtom(atomIsCollected)
-  const [{ idleTimestamp, isSetup, capacity }, setBlender] =
-    useAtom(atomBlender)
+  const [
+    { idleTimestamp, isSetup,
+      // Introuced new prop
+      // Was causing to fail and blank screen
+      // @see https://github.com/D3Portillo/fruit-smasher/commit/9f7c271a654283e5c8257497091b58159247fce8#diff-cf176e01f0ad0f3a84162112a380a037bd7051c32b7a5868c8637c025a6fcc5fR24
+      capacity = INIITAL_TAPS_CAPACITY },
+    setBlender,
+  ] = useAtom(atomBlender)
 
   const earnedTillOpen = useMemo(() => {
     return idleTimestamp > 0
