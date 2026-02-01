@@ -31,7 +31,7 @@ const ErudaProvider = dynamic(
   () => import("../components/Eruda").then((r) => r.ErudaProvider),
   {
     ssr: false,
-  }
+  },
 )
 
 export default function RootLayout({
@@ -41,6 +41,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://www.highperformanceformat.com" />
+      </head>
       <body
         className={`${fontRubik.variable} ${fontSora.variable} ${fontRubik.className} antialiased`}
       >

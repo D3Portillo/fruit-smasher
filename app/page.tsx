@@ -44,6 +44,7 @@ import ExplodingDiv from "@/components/ExplodingDiv"
 import Blades from "@/components/sprites/Blades"
 
 import { tapPowerCurve } from "@/components/ModalBoost/internals"
+import AdMachine from "@/components/AdMachine"
 
 const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 const atomMonster = atomWithStorage("fs.current.monster", {
@@ -106,7 +107,7 @@ export default function Home() {
     incrementMonsterKill(monster.type)
     const newMmonsterType = shuffleArray(
       // Exclude current monster type
-      MONSTER_TYPES.filter((type) => type !== monster.type)
+      MONSTER_TYPES.filter((type) => type !== monster.type),
     ).at(0) as MonsterTypes
 
     setTapsForEnemy(0)
@@ -154,7 +155,7 @@ export default function Home() {
         Math.random() *
           (MAX_SINGLE_TAP *
             // Cap to 1.x multiplier
-            Math.min(1.3, multiplier))
+            Math.min(1.3, multiplier)),
       )
 
     const rand = Math.random()
@@ -162,7 +163,7 @@ export default function Home() {
 
     const DAMAGE = Math.round(
       // Cap to 2x multiplier's MAX damage
-      multiplier * (isBigTap ? BIG_TAP : Math.min(2, BASE_TAP))
+      multiplier * (isBigTap ? BIG_TAP : Math.min(2, BASE_TAP)),
     )
 
     incrTapsGiven(DAMAGE)
@@ -221,7 +222,7 @@ export default function Home() {
   )
 
   const isAssetLoadComplete = Object.keys(MONSTER_ASSETS).every(
-    (image) => loadedAsset[image]
+    (image) => loadedAsset[image],
   )
 
   return (
@@ -262,10 +263,10 @@ export default function Home() {
                       {tapsEarned <= 0
                         ? "NO."
                         : tapsEarned < 10
-                        ? `0${Math.floor(tapsEarned)}`
-                        : tapsEarned.toLocaleString("en-US", {
-                            maximumFractionDigits: 3,
-                          })}
+                          ? `0${Math.floor(tapsEarned)}`
+                          : tapsEarned.toLocaleString("en-US", {
+                              maximumFractionDigits: 3,
+                            })}
                     </strong>
                     <p className="text-lg -mt-1.5 font-medium">TAPS</p>
                   </button>
@@ -297,9 +298,19 @@ export default function Home() {
               )}
             </nav>
 
+            <div className="px-5">
+              <div
+                style={{
+                  aspectRatio: "728 / 90",
+                }}
+              >
+                <AdMachine className="rounded-xl" size="728x90" />
+              </div>
+            </div>
+
             <ClickSpawn
               onTap={handleTap}
-              className="flex group outline-none pt-8 pb-12 flex-grow flex-col items-center justify-start"
+              className="flex pt-5 group outline-none pb-12 flex-grow flex-col items-center justify-start"
             >
               <div
                 style={{
@@ -435,7 +446,7 @@ export default function Home() {
                   isDrillReady
                     ? "font-bold text-fs-green"
                     : "font-medium text-white/50",
-                  "text-xs text-center mt-0.5 pb-2"
+                  "text-xs text-center mt-0.5 pb-2",
                 )}
               >
                 {isDrillReady ? "READY" : `${waitTime - elapsedTime}s`}
