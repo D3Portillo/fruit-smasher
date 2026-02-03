@@ -44,7 +44,7 @@ import ExplodingDiv from "@/components/ExplodingDiv"
 import Blades from "@/components/sprites/Blades"
 
 import { tapPowerCurve } from "@/components/ModalBoost/internals"
-import AdMachine from "@/components/AdMachine"
+import MainAdBanner from "@/components/MainAdBanner"
 
 const atomTapsGivenForEnemy = atomWithStorage("fs.current.tapsForEnemy", 0)
 const atomMonster = atomWithStorage("fs.current.monster", {
@@ -298,15 +298,7 @@ export default function Home() {
               )}
             </nav>
 
-            <div className="px-5">
-              <div
-                style={{
-                  aspectRatio: "728 / 90",
-                }}
-              >
-                <AdMachine className="rounded-xl" size="728x90" />
-              </div>
-            </div>
+            <MainAdBanner />
 
             <ClickSpawn
               onTap={handleTap}

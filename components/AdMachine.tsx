@@ -26,7 +26,7 @@ export default function AdMachine({
     // Initial ad setup + unique container
     const ad = document.createElement("div")
     ad.style = "width:100%;height:100%;"
-    ad.id = "ad-" + Date.now()
+    ad.id = "amx-" + Date.now()
 
     // Set options with unique container
     ;(window as any).atOptions = {
@@ -45,7 +45,7 @@ export default function AdMachine({
       container.classList.add("hidden")
     }
 
-    // Render add
+    // Render ad
     ad.replaceChildren(script)
     container.replaceChildren(ad)
 
@@ -70,7 +70,7 @@ export default function AdMachine({
       }}
       id={AD_CONTAINER_ID}
       className={cn(
-        "hidden overflow-hidden [&_img]:!w-full bg-black/3 animate-in fade-in",
+        "hidden AdMachine overflow-hidden [&_img]:!w-full bg-black/3 animate-in fade-in",
         className,
       )}
     />
